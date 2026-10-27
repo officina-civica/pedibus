@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:db": "bash tests/run.sh",
+    "e2e:avvia": "bash tests/e2e/avvia.sh",
+    "e2e": "node tests/e2e/giro.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

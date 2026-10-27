@@ -32,10 +32,12 @@ supabase/
     20261027000500_avvisi_push.sql    abbonamenti push, esiti di consegna, webhook verso la Edge Function
     20261027000600_viste_app.sql      letture del genitore (stato delle linee, giorno di riferimento)
     20261027000700_letture_turni.sql  letture di volontario e admin (turno, appello, riepilogo)
+    20261027000800_rls_deleghe.sql    il genitore vede il proprio delegato (trovato dal giro e2e)
   functions/invia-avvisi/index.ts     la Edge Function che svuota la coda: Web Push + SMS (Twilio)
   seed.sql                            il "martedì a Vedano" del prototipo (solo sviluppo)
 prototipo/index.html                  il prototipo interattivo (demo con regia + mappa delle schermate)
 tests/
+  e2e/                                Supabase in miniatura (PostgREST + supalite) e il giro da browser
   run.sh                              crea un DB locale, applica tutto, rigioca la giornata
   replay.sql                          le 8 fasi + verifiche RLS per genitore, delegato, volontario, admin, anonimo
   shim_auth.sql                       il minimo di auth.* per girare senza Supabase (non è una migrazione)
@@ -175,6 +177,24 @@ può venire, backup avvisati (6:50) → Anna copre (7:00) → appello della Verd
 trovato, consegna (8:02) → giro della Blu (8:01) → approvazioni dell'admin → bozza di novembre, inviata,
 resa da rivedere da un'eccezione, rigenerata → verifiche per anonimo → dispatcher dei job.
 
+## Provare l'app da browser, senza Docker
+
+`tests/e2e/avvia.sh` mette in piedi un Supabase in miniatura sul Postgres locale: PostgREST (binario statico,
+`PGRST_BIN`) con la RLS vera, più `tests/e2e/supalite.js`, il minimo di GoTrue (JWT firmati, `/auth/v1/user`,
+refresh, logout) e l'inoltro di `/rest/v1`. Con `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54329` e la chiave anon
+che lo script stampa, l'app gira contro i dati del seed.
+
+```bash
+npm run e2e:avvia                       # database pedibus_e2e, PostgREST :3011, supalite :54329
+npm run build && npx next start -p 3077
+npm run e2e -- --shots /tmp/shots       # il giro: Giulia, Marta, Paolo, Anna, admin, Karimi
+```
+
+Il giro entra come ciascuno iniettando il cookie di sessione e rifà la storia del martedì nell'app: assenza di
+Sofia, Paolo che non viene, Anna che copre, l'appello completo con Davide aggiunto e Leonardo non trovato, la
+consegna, gli avvisi di Giulia, le approvazioni e la bozza dell'admin. È così che sono stati trovati i due difetti
+corretti nella migrazione 8 e nel bottone «Copro io».
+
 ## Collegare il progetto Supabase
 
 Progetto `pedibus-vedano`, ref `hrrdogjoymunfakwduxd`, regione EU.
@@ -196,7 +216,7 @@ compare in `cron.job`).
 
 1. Account Twilio (mittente alfanumerico "PEDIBUS", da verificare la pre-registrazione per l'Italia), chiavi VAPID,
    deploy della funzione e `impostazioni` compilate: vedi sopra.
-2. Primo giro vero contro il progetto Supabase (chiave anon in `.env.local`, migrazioni spinte, Twilio): le schermate
-   sono verificate su build, tipi e replay del database, non ancora in un browser con dati veri.
+2. Primo giro contro il progetto Supabase vero (chiave anon in `.env.local`, migrazioni spinte, Twilio): in locale
+   l'app è verificata da browser contro schema e RLS veri (vedi sopra), ma non ancora con GoTrue, SMS e push reali.
    Poi: modifica linee/fermate e chiusure dall'app, deleghe dall'app, inserimento manuale. Dominio definitivo prima delle passkey.
 3. L'algoritmo a vincoli vero per la bozza mensile, con il confronto "cosa cambia" alla rigenerazione.

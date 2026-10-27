@@ -22,7 +22,9 @@ export function ProssimoTurno({ t }: { t: TurnoDettaglio }) {
   const [backup, setBackup] = useState(false);
   const io = t.volontari.find((v) => v.sono_io);
   const hoAvvisato = io?.stato === "non_viene";
-  const sonoDentro = !!io && io.stato !== "non_viene";
+  // Titolare (o riserva che già copre): posso dire che non vengo. Backup libero o estraneo: posso coprire.
+  const sonoDentro = !!io && (io.ruolo === "titolare" || io.stato === "copre") && io.stato !== "non_viene";
+  const possoCoprire = (!io || (io.ruolo === "backup" && io.stato === "assegnato")) || hoAvvisato;
   const parte = turnoParte(t.stato);
   const coperto = t.copertura >= t.linea.min_volontari;
   const mancanti = t.volontari.filter((v) => v.stato === "non_viene").map((v) => v.nome);
@@ -75,7 +77,7 @@ export function ProssimoTurno({ t }: { t: TurnoDettaglio }) {
             {hoAvvisato ? "Hai avvisato" : "Non posso venire"}
           </Button>
         )}
-        {!sonoDentro && parte && !finito && !coperto && (
+        {possoCoprire && parte && !finito && !coperto && (
           <Button variant="primary" className="flex-1" disabled={pending} onClick={() => esegui(() => coproTurno(t.id))}>Copro io il turno</Button>
         )}
         <Button className="flex-1" onClick={() => setBackup(!backup)}><Users size={16} /> Chi è di backup</Button>

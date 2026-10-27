@@ -74,6 +74,7 @@ select verifica((select count(*) from turni) = 2, 'Giulia vede i turni di Verde 
 select verifica((select count(*) from turni_volontari) = 0, 'Giulia non vede chi è di turno');
 select verifica((select count(*) from presenze) = 0, 'Giulia non vede le assenze degli altri');
 select verifica((select count(*) from contatti_emergenza) = 4, 'Giulia vede i contatti dei suoi bambini');
+select verifica((select count(*) from persone) = 2, 'Giulia vede se stessa e la nonna delegata, nessun altro');
 select verifica((select count(*) from avvisi) = 0, 'Giulia non ha ancora avvisi');
 select verifica(mio_giorno_riferimento() = '2026-10-27' or mio_giorno_riferimento() >= current_date, 'giorno di riferimento calcolato');
 select verifica((select count(*) from stato_mie_linee('2026-10-27')) = 2, 'stato_mie_linee: Verde e Blu');
@@ -85,6 +86,7 @@ select deve_fallire(format('select segna_presenza(%L, %L, %L, %L)', :matteo, 'as
 -- La nonna delegata: solo presenze, niente contatti, niente avvisi di Giulia
 select come(:rita);
 select verifica((select count(*) from bambini) = 2, 'Rita (delegata) vede i 2 bambini di Giulia');
+select verifica((select count(*) from persone where id = :giulia) = 1, 'Rita vede Giulia (che l''ha delegata)');
 select verifica((select count(*) from contatti_emergenza) = 0, 'Rita non vede i contatti d''emergenza');
 select verifica((select count(*) from avvisi) = 0, 'Rita non vede gli avvisi di Giulia');
 select verifica(segna_presenza(:luca, 'assente', '2026-10-27', '2026-10-26 17:40+01') = 'Assenza segnalata.', 'Rita può segnare Luca');
