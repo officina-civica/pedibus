@@ -44,10 +44,12 @@ enable_confirmations = true
 template = "Pedibus: il tuo codice è {{ .Code }}. Vale 5 minuti."
 max_frequency = "60s"
 
-[auth.sms.twilio]
+# Codici di accesso via Twilio Verify (niente numero mittente: lo gestisce Twilio).
+# In produzione le chiavi stanno nella dashboard: Authentication → Sign In / Providers → Phone.
+[auth.sms.twilio_verify]
 enabled = true
 account_sid = "env(SUPABASE_AUTH_SMS_TWILIO_ACCOUNT_SID)"
-message_service_sid = "env(SUPABASE_AUTH_SMS_TWILIO_MESSAGE_SERVICE_SID)"
+message_service_sid = "env(SUPABASE_AUTH_SMS_TWILIO_VERIFY_SERVICE_SID)"
 auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 
 [auth.rate_limit]
