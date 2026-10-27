@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Hourglass } from "lucide-react";
 import { getSessione, nomeCompleto } from "@/lib/sessione";
 import { supabaseServer } from "@/lib/supabase/server";
@@ -26,7 +27,10 @@ export default async function InAttesaPage() {
           ? "La tua richiesta non è stata approvata. Contatta il comitato per i dettagli."
           : "Il tuo numero non risulta ancora iscritto al pedibus. Se hai fatto l'iscrizione, l'amministratore la sta verificando; altrimenti contatta il comitato."}
       </p>
-      <form action={esci} className="mt-4 w-full"><Button type="submit" block>Esci</Button></form>
+      {!inAttesa.length && !rifiutati.length && (
+        <Link href="/iscrizione" className="mt-2 inline-flex min-h-12 w-full items-center justify-center rounded-md border border-primary bg-primary px-4 font-semibold text-primary-fg">Iscrivi i tuoi bambini</Link>
+      )}
+      <form action={esci} className="mt-2 w-full"><Button type="submit" block>Esci</Button></form>
     </main>
   );
 }

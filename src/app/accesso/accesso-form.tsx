@@ -29,8 +29,9 @@ export function AccessoForm() {
   const [pending, start] = useTransition();
 
   useEffect(() => {
-    // La passkey si offre solo dove il browser la supporta.
-    setPasskeyOk(typeof window !== "undefined" && "PublicKeyCredential" in window);
+    // La passkey si offre solo dove il browser la supporta (deciso dopo l'idratazione, fuori dal corpo dell'effetto).
+    const t = setTimeout(() => setPasskeyOk("PublicKeyCredential" in window), 0);
+    return () => clearTimeout(t);
   }, []);
 
   const entrato = () => { router.replace("/"); router.refresh(); };

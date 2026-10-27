@@ -16,8 +16,9 @@ interattivo *Pedibus Vedano* (demo con regia + mappa di tutte le schermate).
 ```
 src/                                  l'app (Next.js 16, App Router, Tailwind 4, componenti stile shadcn/ui)
   app/accesso                         telefono → codice SMS; passkey
-  app/(app)/presenze|avvisi|profilo   il genitore (fatto); turni, appello, oggi, iscrizioni, linee: segnaposto
-  app/(app)/azioni.ts                 server actions: presenze (RPC), avvisi letti, abbonamenti push, ruolo, uscita
+  app/(app)/…                         presenze, avvisi, profilo, turni, appello, oggi, iscrizioni, linee
+  app/iscrizione                      il modulo di iscrizione
+  app/(app)/azioni*.ts                server actions: ogni regola è una RPC del database
   lib/supabase                        client browser / server (@supabase/ssr); proxy.ts rinfresca la sessione
   lib/database.types.ts               tipi del DB scritti a mano (da sostituire con `supabase gen types`)
 public/sw.js, manifest.webmanifest    PWA: service worker per le push, icone
@@ -29,6 +30,8 @@ supabase/
     20261027000300_rls.sql            chi vede cosa, per ruolo
     20261027000400_job.sql            dispatcher pg_cron ogni 5 minuti, orari in Europe/Rome
     20261027000500_avvisi_push.sql    abbonamenti push, esiti di consegna, webhook verso la Edge Function
+    20261027000600_viste_app.sql      letture del genitore (stato delle linee, giorno di riferimento)
+    20261027000700_letture_turni.sql  letture di volontario e admin (turno, appello, riepilogo)
   functions/invia-avvisi/index.ts     la Edge Function che svuota la coda: Web Push + SMS (Twilio)
   seed.sql                            il "martedì a Vedano" del prototipo (solo sviluppo)
 prototipo/index.html                  il prototipo interattivo (demo con regia + mappa delle schermate)
@@ -129,10 +132,24 @@ npm run dev                     # http://localhost:3000
 npm run build                   # deve restare verde
 ```
 
-Fatto: accesso (codice SMS, passkey), shell con barra per ruolo e cambio ruolo per chi ne ha più d'uno, e il
-genitore completo — Presenze (stato e azione affiancati, chiusura alle 18:00, stato delle linee con conteggi via
-`stato_mie_linee`), Avvisi (archivio, letti all'apertura), Profilo (bambini, backup, contatti, privacy,
-**attivazione delle push su questo telefono**, **passkey**). Chi entra senza un ruolo approvato vede "In attesa".
+Fatto, per tutti e tre i ruoli, con le schermate del prototipo:
+
+- **Accesso**: codice via SMS, passkey; shell con barra per ruolo e cambio ruolo per chi ne ha più d'uno; "In attesa"
+  per chi non ha ancora un ruolo approvato, con il link all'**iscrizione** (genitore, bambini, fermata, contatti
+  d'emergenza, consenso versionato → `iscrivi_bambino`).
+- **Genitore**: Presenze (stato e azione affiancati, chiusura alle 18:00, stato delle linee con conteggi via
+  `stato_mie_linee`), Avvisi (archivio, letti all'apertura), Profilo (bambini, backup, contatti, privacy, **push su
+  questo telefono**, **passkey**).
+- **Volontario**: Turni (prossimo turno con team, kit, escalation; «Non posso venire», «Copro io il turno», chi è di
+  backup; due settimane; bozza del mese), Appello (anteprima per fermata, apertura al capolinea, spunte, bambino non
+  in lista solo se iscritto, «Prossima fermata», consegna, contatti d'emergenza con consultazione registrata),
+  Profilo (settimana tipo, **eccezioni per data** sul calendario del mese prossimo, dotazioni).
+- **Amministratore**: Oggi (alert per linea, iscrizioni in attesa, presenti, turni con copertura e kit), Iscrizioni
+  (approva/rifiuta iscrizioni e richieste da volontario, con motivo), Linee (fermate, bambini per fermata, soglie,
+  chiusure; in sola lettura), Turni (team del giorno, bozza del mese: genera, invia, pubblica, rigenera se "da rivedere").
+
+Non ancora: modifica di linee e fermate dall'app, inserimento manuale di chi non usa l'app, gestione dei backup del
+genitore (deleghe) dall'app, calendario delle chiusure modificabile.
 
 Scelte da sapere: le pagine sono tutte dinamiche (`cacheComponents` spento: dati per utente ovunque); i dati
 passano da Supabase con la RLS dell'utente, le regole dalle RPC; la lettura dei conteggi di linea è una funzione
@@ -140,7 +157,9 @@ passano da Supabase con la RLS dell'utente, le regole dalle RPC; la lettura dei 
 aggiunta alla schermata Home: il profilo lo spiega. Il registry di shadcn non era raggiungibile dalla sandbox:
 i componenti (`src/components/ui`) sono scritti a mano nello stesso stile; `npx shadcn add` funziona comunque.
 
-Prossimo passo: volontario (Turni con «Non posso venire», Appello), poi amministratore.
+Le letture che l'app fa per volontario e admin (`turno_dettaglio`, `miei_turni`, `appello_anteprima`,
+`appello_stato`, `riepilogo_admin`, `turni_del_giorno`) sono funzioni `security definer` con il controllo di ruolo
+dentro: l'app non ricompone regole, mostra. Sono coperte dal replay.
 
 ## Provare in locale (database)
 
@@ -177,6 +196,7 @@ compare in `cron.job`).
 
 1. Account Twilio (mittente alfanumerico "PEDIBUS", da verificare la pre-registrazione per l'Italia), chiavi VAPID,
    deploy della funzione e `impostazioni` compilate: vedi sopra.
-2. L'app: volontario (Turni, Appello) e amministratore (Oggi, Iscrizioni, Linee, Turni); il genitore c'è.
-   Iscrizione dall'app (oggi via RPC `iscrivi_bambino`, senza schermata). Dominio definitivo deciso prima delle passkey.
+2. Primo giro vero contro il progetto Supabase (chiave anon in `.env.local`, migrazioni spinte, Twilio): le schermate
+   sono verificate su build, tipi e replay del database, non ancora in un browser con dati veri.
+   Poi: modifica linee/fermate e chiusure dall'app, deleghe dall'app, inserimento manuale. Dominio definitivo prima delle passkey.
 3. L'algoritmo a vincoli vero per la bozza mensile, con il confronto "cosa cambia" alla rigenerazione.

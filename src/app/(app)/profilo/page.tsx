@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getSessione, nomeCompleto } from "@/lib/sessione";
@@ -9,6 +10,9 @@ import { iniziali } from "@/lib/utils";
 import { esci } from "@/app/(app)/azioni";
 import { Notifiche } from "./notifiche";
 import { Passkey } from "./passkey";
+import { Disponibilita } from "./disponibilita";
+import { BriefcaseMedical } from "lucide-react";
+import { oggiRome } from "@/lib/date";
 
 export const metadata: Metadata = { title: "Profilo" };
 
@@ -29,6 +33,17 @@ export default async function ProfiloPage() {
   const { data: fermate } = await supabase.from("fermate").select("id, ordine").in("id", (iscrizioni ?? []).map((i) => i.fermata_id));
   const { data: delegati } = deleghe?.length ? await supabase.from("persone").select("id, nome, cognome, telefono").in("id", deleghe.map((d) => d.delegato_id)) : { data: [] };
   const informativa = (await supabase.from("informative").select("*").order("valida_dal", { ascending: false }).limit(1)).data?.[0];
+
+  const volontario = s.ruoli.some((r) => r.ruolo === "volontario");
+  const prossimoMese = new Date(oggiRome().slice(0, 7) + "-01T12:00:00"); prossimoMese.setMonth(prossimoMese.getMonth() + 1);
+  const meseIso = prossimoMese.toISOString().slice(0, 10);
+  const [{ data: disp }, { data: ecc }, { data: dotazioni }, { data: chiusure }, { data: bozze }] = volontario ? await Promise.all([
+    supabase.from("disponibilita").select("giorno").eq("volontario_id", s.userId),
+    supabase.from("eccezioni_disponibilita").select("giorno, tipo").eq("volontario_id", s.userId).gte("giorno", meseIso),
+    supabase.from("dotazioni").select("*").eq("volontario_id", s.userId).is("restituita_il", null),
+    supabase.from("calendario_chiusure").select("giorno").gte("giorno", meseIso),
+    supabase.from("bozze_turni").select("id, mese, stato").eq("mese", meseIso),
+  ]) : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }];
 
   const nome = nomeCompleto(s.persona);
   const ruoliTesto = s.ruoli.map((r) => RUOLO[r.ruolo]).join(", ");
@@ -52,6 +67,27 @@ export default async function ProfiloPage() {
         <H2>Accesso</H2>
         <Passkey />
       </div>
+
+      {volontario && (
+        <>
+          <Disponibilita giorni={(disp ?? []).map((d) => d.giorno)} eccezioni={ecc ?? []} mese={meseIso} chiusure={(chiusure ?? []).map((c) => c.giorno)} bozzaFatta={(bozze ?? []).length > 0} />
+          <div className="flex flex-col gap-2">
+            <H2>Dotazioni</H2>
+            <Card>
+              <div className="flex items-center justify-between gap-2.5"><span className="flex items-center gap-2"><BriefcaseMedical size={16} /> Kit di primo soccorso</span><Badge tone={(dotazioni ?? []).some((d) => d.tipo === "kit") ? "ok" : "muted"}>{(dotazioni ?? []).some((d) => d.tipo === "kit") ? "consegnato" : "non assegnato"}</Badge></div>
+              <div className="flex items-center justify-between gap-2.5"><span>Pettorina</span><span className="text-[13px] text-muted">{(dotazioni ?? []).find((d) => d.tipo === "pettorina")?.numero ? `n. ${(dotazioni ?? []).find((d) => d.tipo === "pettorina")!.numero}` : "—"}</span></div>
+              <div className="flex items-center justify-between gap-2.5"><span>Paletta</span><span className="text-[13px] text-muted">{(dotazioni ?? []).some((d) => d.tipo === "paletta") ? "consegnata" : "personale"}</span></div>
+            </Card>
+          </div>
+          <div className="flex flex-col gap-2">
+            <H2>Requisiti</H2>
+            <Card>
+              <div className="flex items-center justify-between gap-2.5"><span>Albo dei volontari civici</span><Badge tone="ok">verificato</Badge></div>
+              <div className="flex items-center justify-between gap-2.5"><span>Assicurazione</span><span className="text-[13px] text-muted">a carico del Comune</span></div>
+            </Card>
+          </div>
+        </>
+      )}
 
       {(bambini ?? []).length > 0 && (
         <div className="flex flex-col gap-2">
@@ -122,6 +158,7 @@ export default async function ProfiloPage() {
         </Card>
       </div>
 
+      <Link href="/iscrizione" className="inline-flex min-h-12 w-full items-center justify-center rounded-md border border-dashed border-border bg-card px-4 text-sm font-medium">Iscrivi un altro bambino</Link>
       <form action={esci}>
         <Button type="submit" block><LogOut size={18} /> Esci</Button>
       </form>
