@@ -1,0 +1,981 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Pedibus Vedano</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one phone-shaped app frame; on wide screens the demo "regia" panel sits beside it. Tokens follow shadcn/ui zinc, accent = arancio pettorina. */
+:root{
+  --bg:#f4f4f5; --card:#ffffff; --fg:#09090b; --muted:#71717a; --muted-bg:#f4f4f5; --border:#e4e4e7;
+  --primary:#18181b; --primary-fg:#fafafa;
+  --accent:#c2410c; --accent-soft:#ffedd5; --accent-fg:#9a3412; --accent-line:#fdba74;
+  --ok:#15803d; --ok-soft:#f0fdf4; --ok-fg:#166534; --ok-line:#bbf7d0;
+  --danger:#b91c1c; --danger-soft:#fef2f2; --danger-line:#fecaca;
+  --info:#1d4ed8; --shadow:0 20px 60px rgba(9,9,11,.14);
+  --font:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; --radius:8px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#09090b; --card:#18181b; --fg:#fafafa; --muted:#a1a1aa; --muted-bg:#27272a; --border:#3f3f46;
+    --primary:#fafafa; --primary-fg:#18181b;
+    --accent:#fb923c; --accent-soft:#431407; --accent-fg:#fdba74; --accent-line:#7c2d12;
+    --ok:#4ade80; --ok-soft:#052e16; --ok-fg:#86efac; --ok-line:#166534;
+    --danger:#f87171; --danger-soft:#450a0a; --danger-line:#7f1d1d;
+    --info:#60a5fa; --shadow:0 20px 60px rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#09090b; --card:#18181b; --fg:#fafafa; --muted:#a1a1aa; --muted-bg:#27272a; --border:#3f3f46;
+  --primary:#fafafa; --primary-fg:#18181b;
+  --accent:#fb923c; --accent-soft:#431407; --accent-fg:#fdba74; --accent-line:#7c2d12;
+  --ok:#4ade80; --ok-soft:#052e16; --ok-fg:#86efac; --ok-line:#166534;
+  --danger:#f87171; --danger-soft:#450a0a; --danger-line:#7f1d1d;
+  --info:#60a5fa; --shadow:0 20px 60px rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.4;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:inherit}
+h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+h2{margin:0;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+h3{margin:0;font-size:16px;font-weight:700}
+p{margin:0}
+.sub{font-size:14px;color:var(--muted)}
+.small{font-size:13px;color:var(--muted);line-height:1.5}
+.num{font-variant-numeric:tabular-nums}
+.i{display:inline-flex;width:1em;height:1em;flex-shrink:0}
+.i svg{width:100%;height:100%}
+
+#app{height:100%}
+#app[data-mode="mappa"]{height:auto}
+.stage{height:100%;display:grid;grid-template-columns:minmax(0,1fr);justify-items:center}
+.frame{width:100%;max-width:430px;height:100%;background:var(--card);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.regia{display:none}
+@media (min-width:960px){
+  .stage{grid-template-columns:430px 380px;justify-content:center;align-items:center;gap:28px;padding-block:16px;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px))}
+  .frame{height:min(900px,100%);border:1px solid var(--border);border-radius:28px;box-shadow:var(--shadow)}
+  .regia{display:flex;flex-direction:column;gap:12px;width:100%;max-height:min(900px,100%);overflow:auto}
+  .strip,.sheet{display:none !important}
+}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-block:10px;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));border-bottom:1px solid var(--border);background:var(--card)}
+.pills{display:flex;gap:2px;background:var(--muted-bg);padding:3px;border-radius:999px}
+.pill{min-height:36px;padding:0 12px;border:0;border-radius:999px;background:transparent;color:var(--muted);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.pill.on{background:var(--card);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.clock{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+
+.screen{flex:1;overflow:auto;padding-block:18px 20px;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px))}
+.stack{display:flex;flex-direction:column;gap:14px}
+.stack-s{display:flex;flex-direction:column;gap:8px}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.between{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.hstack{display:flex;align-items:center;gap:8px}
+.grow{flex:1;min-width:0}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 16px;border-radius:var(--radius);border:1px solid transparent;font:inherit;font-weight:600;font-size:15px;cursor:pointer;background:var(--card);color:var(--fg);text-decoration:none}
+.btn-primary{background:var(--primary);color:var(--primary-fg);border-color:var(--primary)}
+.btn-outline{border-color:var(--border)}
+.btn-danger{border-color:var(--danger-line);color:var(--danger)}
+.btn-dashed{border:1px dashed var(--border);font-weight:500;font-size:14px}
+.btn-lg{min-height:56px;font-size:16px}
+.btn-sm{min-height:40px;font-size:13px;padding:0 12px}
+.btn-block{width:100%}
+.btn:disabled{opacity:.45;cursor:default}
+.iconbtn{width:44px;height:44px;padding:0;flex-shrink:0}
+
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:13px;font-weight:500}
+.input{height:48px;width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:0 12px;font:inherit;font-size:16px;background:var(--card);color:var(--fg)}
+.input::placeholder{color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.check{display:flex;align-items:flex-start;gap:12px;font-size:13px;line-height:1.5}
+.check input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--accent);flex-shrink:0}
+
+.card{border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--card);display:flex;flex-direction:column;gap:12px}
+.card-accent{border-color:var(--accent-line);border-left:4px solid var(--accent)}
+.rows{border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.row{display:flex;align-items:center;gap:12px;padding:10px 12px;min-height:64px;border-bottom:1px solid var(--border);background:var(--card)}
+.row:last-child{border-bottom:0}
+.row.muted{background:var(--muted-bg)}
+.row-btn{width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;border:0;border-bottom:1px solid var(--border)}
+.row-btn:last-child{border-bottom:0}
+.av{width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;background:var(--muted-bg);color:var(--fg);flex-shrink:0}
+.av-accent{background:var(--accent-soft);color:var(--accent-fg)}
+.av-s{width:28px;height:28px;font-size:11px}
+.title{font-size:16px;font-weight:600}
+.meta{font-size:13px;color:var(--muted)}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-ok{background:var(--ok-soft);color:var(--ok-fg);border:1px solid var(--ok-line)}
+.b-accent{background:var(--accent-soft);color:var(--accent-fg)}
+.b-muted{background:var(--muted-bg);color:var(--fg)}
+.b-danger{background:var(--danger-soft);color:var(--danger)}
+.b-dark{background:var(--primary);color:var(--primary-fg)}
+.dotc{width:12px;height:12px;border-radius:999px;flex-shrink:0;display:inline-block}
+
+.alert{border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;background:var(--muted-bg)}
+.alert .i{margin-top:2px}
+.a-warn{border-color:var(--accent-line);background:var(--accent-soft);color:var(--accent-fg)}
+.a-ok{border-color:var(--ok-line);background:var(--ok-soft);color:var(--ok-fg)}
+.a-danger{border-color:var(--danger-line);background:var(--danger-soft);color:var(--danger)}
+.alert .body{display:flex;flex-direction:column;gap:3px;min-width:0}
+.alert .body b{font-weight:700}
+.alert .body span{font-size:13px;line-height:1.45}
+
+.seg{display:flex;gap:8px}
+.seg .btn{flex:1;min-height:56px;border-color:var(--border)}
+.seg .btn.on{background:var(--primary);color:var(--primary-fg);border-color:var(--primary)}
+.chk{width:44px;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid var(--border);color:transparent}
+.chk.on{background:var(--ok);border-color:var(--ok);color:#fff}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .chk.on{color:#052e16} }
+:root[data-theme="dark"] .chk.on{color:#052e16}
+.progress{display:grid;gap:4px}
+.progress span{height:6px;border-radius:999px;background:var(--border)}
+.progress span.done{background:var(--primary)}
+.progress span.cur{background:var(--accent)}
+
+.kpi{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.kpi .card{gap:4px}
+.kpi .big{font-size:22px;font-weight:700}
+
+.nav{display:grid;border-top:1px solid var(--border);padding-block:6px 10px;padding-inline:max(8px,env(safe-area-inset-left,0px)) max(8px,env(safe-area-inset-right,0px));background:var(--card)}
+.nav a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;font-size:11px;font-weight:500;color:var(--muted);text-decoration:none;position:relative;min-height:48px;justify-content:center}
+.nav a.on{color:var(--accent);font-weight:600}
+.nav .cnt{position:absolute;top:2px;left:calc(50% + 6px);min-width:16px;height:16px;border-radius:999px;background:var(--accent);color:var(--card);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px}
+
+.footbar{padding-block:10px 14px;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));border-top:1px solid var(--border);background:var(--card)}
+.toast{position:absolute;left:16px;right:16px;bottom:96px;background:var(--primary);color:var(--primary-fg);padding:12px 14px;border-radius:10px;font-size:14px;font-weight:500;z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+
+.steps{display:flex;flex-direction:column;gap:4px}
+.step{display:flex;gap:10px;padding:10px 12px;border-radius:10px;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;width:100%;align-items:flex-start}
+.step .n{width:26px;height:26px;border-radius:999px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;color:var(--muted)}
+.step.done .n{background:var(--primary);border-color:var(--primary);color:var(--primary-fg)}
+.step.cur{background:var(--accent-soft)}
+.step.cur .n{border-color:var(--accent);color:var(--accent)}
+.step .t{font-size:12px;font-weight:600;color:var(--muted)}
+.step.cur .t{color:var(--accent-fg)}
+.step .st{font-size:14px;font-weight:600}
+.step .sd{font-size:12px;color:var(--muted);line-height:1.4}
+.step.cur .sd{color:var(--accent-fg)}
+.step .where{display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;color:var(--muted);background:var(--muted-bg)}
+.step.cur .where{background:var(--card);color:var(--accent-fg)}
+.step.done .where{opacity:.7}
+
+/* Striscia della regia: solo sul telefono, in cima al frame; apre il foglio con i passi. */
+.strip{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;border:0;border-bottom:1px solid var(--accent-line);background:var(--accent-soft);color:var(--accent-fg);font:inherit;font-size:12px;font-weight:600;padding-block:6px;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(12px,env(safe-area-inset-right,0px));cursor:pointer;text-align:left;flex-shrink:0}
+.strip .grow{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sheet{position:fixed;inset:0;z-index:30;display:flex;align-items:flex-end}
+.sheet .backdrop{position:absolute;inset:0;background:rgba(9,9,11,.5)}
+.sheet .panel{position:relative;width:100%;max-height:80%;overflow:auto;background:var(--card);color:var(--fg);border-radius:20px 20px 0 0;padding-block:16px calc(16px + env(safe-area-inset-bottom,0px));padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:12px}
+.rcard{border:1px solid var(--border);border-radius:16px;background:var(--card);padding:16px;display:flex;flex-direction:column;gap:12px}
+.hint{font-size:12px;color:var(--muted);line-height:1.5}
+.login{display:flex;flex-direction:column;gap:14px;align-items:center;padding-top:40px}
+.logo{width:64px;height:64px;border-radius:16px;background:var(--accent);color:var(--card);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px}
+.divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+.divider span{flex:1;height:1px;background:var(--border)}
+.week{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.day{min-height:56px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--fg);font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.day small{font-size:11px;color:var(--muted);text-transform:uppercase}
+.day b{font-size:14px}
+.day.on{background:var(--primary);color:var(--primary-fg);border-color:var(--primary)}
+.day.on small{color:var(--primary-fg);opacity:.75}
+/* Presenze: stato e azione affiancati, due colonne uguali, stessa altezza. */
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.state{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 10px;border-radius:var(--radius);font-size:13px;font-weight:600;white-space:nowrap;border:1px solid transparent}
+.state.b-danger{border-color:var(--danger-line)}
+.btn.state{min-height:40px;padding:0 10px;font-size:13px}
+.cal{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.cd{min-height:48px;padding:4px 2px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--fg);font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.cd b{font-size:14px}
+.cd small{font-size:10px;line-height:1.1;color:var(--muted);text-transform:uppercase;letter-spacing:.02em;text-align:center}
+.cd.off{background:var(--muted-bg);color:var(--muted);border-style:dashed}
+.cd.out{background:var(--danger-soft);border-color:var(--danger-line);color:var(--danger)}
+.cd.out b{text-decoration:line-through}
+.cd.out small,.cd.in small{color:inherit;font-weight:700}
+.cd.in{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok-fg)}
+.stoprow{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;border-bottom:1px solid var(--border)}
+.stoprow:last-child{border-bottom:0}
+.stopn{width:24px;height:24px;border-radius:999px;background:var(--primary);color:var(--primary-fg);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.stopn.end{background:var(--accent);color:var(--card)}
+.notif{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.notif:last-child{border-bottom:0}
+.notif .nt{font-size:14px;font-weight:600}
+.notif .nb{font-size:13px;color:var(--muted);line-height:1.45}
+.notif .nm{font-size:11px;color:var(--muted);white-space:nowrap;padding-top:2px}
+.mono{font-variant-numeric:tabular-nums}
+
+/* Mappa delle schermate: sezioni per ruolo, righe per flusso, telefoni a tutta altezza (nessuno scroll interno). */
+.gal{max-width:1640px;margin:0 auto;padding-block:24px 64px;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+.galhead{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.galhead .sub{max-width:720px;margin-top:4px;text-wrap:pretty}
+.galfilter{align-self:flex-start;position:sticky;top:8px;z-index:3;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.08);flex-wrap:wrap}
+.role{display:flex;flex-direction:column;gap:20px;padding-top:24px;border-top:1px solid var(--border)}
+.rolehead{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.roletitle{font-size:21px;font-weight:700;color:var(--fg);text-transform:none;letter-spacing:-.01em;line-height:1.2}
+.rolehead .small{max-width:760px;text-wrap:pretty}
+.flow{display:flex;flex-direction:column;gap:14px}
+.flowhead{display:flex;flex-direction:column;gap:2px}
+.flowhead h3{font-size:15px}
+.flowhead .small{max-width:760px;text-wrap:pretty}
+.shots{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.shot{margin:0;width:min(360px,100%);display:flex;flex-direction:column;gap:10px}
+.shot figcaption{display:flex;flex-direction:column;gap:2px;padding-inline:6px}
+.shot figcaption b{font-size:14px}
+.frame.mini{width:100%;max-width:none;height:auto;border:1px solid var(--border);border-radius:24px;box-shadow:0 10px 30px rgba(9,9,11,.10);pointer-events:none;user-select:none}
+.frame.mini .screen{flex:none;overflow:visible}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .frame.mini{box-shadow:0 10px 30px rgba(0,0,0,.5)} }
+:root[data-theme="dark"] .frame.mini{box-shadow:0 10px 30px rgba(0,0,0,.5)}
+@media (prefers-reduced-motion:no-preference){ .btn,.pill,.day{transition:background .15s,color .15s} }
+</style>
+
+<div id="app"></div>
+
+<script>
+/* ---------- icone ---------- */
+const P = {
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  x:'<path d="M18 6 6 18M6 6l12 12"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  chev:'<path d="m9 18 6-6-6-6"/>',
+  back:'<path d="m15 18-6-6 6-6"/>',
+  phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  pin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+  warn:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/>',
+  kit:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/>',
+  shield:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  flag:'<path d="M4 22V15M4 15V4a1 1 0 0 1 1-1h11l-3 4 3 4H5"/>',
+  finger:'<path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/>',
+  play:'<path d="m6 3 14 9-14 9V3z"/>',
+  reset:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
+  school:'<path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 4 2v10H2V12l4-2"/><path d="M6 10V6l6-4 6 4v4"/>',
+  sms:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>'
+};
+const ic = (n, px = 18, sw) => `<span class="i" style="font-size:${px}px"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw || (n === 'check' ? 2.5 : 2)}" stroke-linecap="round" stroke-linejoin="round">${P[n]}</svg></span>`;
+
+/* ---------- dati del paese ---------- */
+const LINES = {
+  verde: { id:'verde', name:'Linea Verde', color:'#15803d', minVol:2, threshold:4, start:'7:30', stops:[
+    {name:'Piazza Repubblica', note:'capolinea', time:'7:30'},
+    {name:'Via Manzoni, 12', time:'7:36'},
+    {name:'Via Roma, farmacia', time:'7:42'},
+    {name:'Via Verdi, parco', time:'7:48'},
+    {name:'Via Dante, chiesa', time:'7:53'},
+    {name:'Scuola primaria', note:'arrivo', time:'8:00'} ] },
+  blu: { id:'blu', name:'Linea Blu', color:'#1d4ed8', minVol:2, threshold:4, start:'7:35', stops:[
+    {name:'Via Battisti', note:'capolinea', time:'7:35'},
+    {name:'Via Verdi, 40', time:'7:41'},
+    {name:'Via Garibaldi, bar', time:'7:47'},
+    {name:'Via Cavour', time:'7:53'},
+    {name:'Scuola primaria', note:'arrivo', time:'8:00'} ] }
+};
+/* Ogni passo ha una scena [persona, tab]: cliccandolo la demo porta esattamente lì. */
+const PHASES = [
+  { t:'Lun 17:30', title:'Lunedì sera', scene:['genitore','presenze'], desc:'Giulia apre Presenze. Luca (Verde) è presente salvo avviso; Sofia (Blu) è segnata assente per il dentista. La Blu è a 3 presenti su un minimo di 4: si decide alle 18:00.' },
+  { t:'Lun 18:00', title:'Chiusura delle assenze', scene:['genitore','presenze'], desc:'L\'app conta i presenti per linea. Verde 9: parte. Blu 3: annullata, riattivabile fino alle 21:00. Giulia lo vede in Presenze e riceve push e SMS (tab Avvisi).' },
+  { t:'Lun 20:40', title:'Modifica tardiva sulla Blu', scene:['genitore','presenze'], desc:'Il dentista salta: Giulia annulla l\'assenza di Sofia. La modifica è tardiva, ma porta la Blu a 4 presenti: la linea si riattiva da sola e avvisa famiglie, volontari e amministratore.' },
+  { t:'Lun 21:00', title:'Soglia definitiva', scene:['admin','oggi'], desc:'Le soglie si chiudono: Verde 9 e Blu 4, partono entrambe. Una linea ancora sotto soglia a quest\'ora resterebbe annullata. L\'amministratore vede presenti, turni e kit per linea.' },
+  { t:'Mar 6:50', title:'Paolo non può venire', scene:['volontaria','turni'], desc:'Marta vede il turno della Verde scoperto: 1 volontario su 2. L\'app ha già avvisato Anna, la riserva del giorno; dopo 10 minuti l\'avviso va a tutti i volontari, poi al gestore turni.' },
+  { t:'Mar 7:00', title:'Anna conferma', scene:['volontaria','turni'], desc:'Anna copre il turno: Verde di nuovo a 2 su 2, con il kit. Nessuno ha dovuto telefonare.' },
+  { t:'Mar 7:30', title:'Partenza', scene:['volontaria','appello'], desc:'Marta apre l\'appello al capolinea e spunta i bambini fermata per fermata. Prova tu: spunta, «Prossima fermata», aggiungi un bambino non in lista.' },
+  { t:'Mar 8:00', title:'A scuola', scene:['genitore','avvisi'], desc:'Entrambe le linee arrivano. Giulia riceve due avvisi: Sofia consegnata alle 8:01 dalla Blu, Luca alle 8:02 dalla Verde. Da qui la responsabilità passa alla scuola.' }
+];
+const HOME = { genitore:'presenze', volontaria:'turni', admin:'oggi' };
+const WHERE = { genitore:'Giulia · genitore', volontaria:'Marta · volontaria', admin:'Admin' };
+const TABL = { presenze:'Presenze', avvisi:'Avvisi', profilo:'Profilo', turni:'Turni', appello:'Appello', oggi:'Oggi', iscrizioni:'Iscrizioni', linee:'Linee' };
+
+function initState(){
+  const kids = [
+    { id:'luca', name:'Luca Bianchi', cls:'2ª B', line:'verde', stop:2, parent:'giulia', presence:'present' },
+    { id:'sofia', f:true, name:'Sofia Bianchi', cls:'4ª A', line:'blu', stop:2, parent:'giulia', presence:'absent' },
+    { id:'matteo', name:'Matteo Rossi', cls:'1ª A', line:'verde', stop:1, parent:'rossi', presence:'present' },
+    { id:'emma', f:true, name:'Emma Colombo', cls:'3ª C', line:'verde', stop:0, parent:'colombo', presence:'present' },
+    { id:'giacomo', name:'Giacomo Ferrari', cls:'5ª A', line:'verde', stop:0, parent:'ferrari', presence:'present' },
+    { id:'aurora', f:true, name:'Aurora Moretti', cls:'2ª A', line:'verde', stop:3, parent:'moretti', presence:'present' },
+    { id:'leo', name:'Leonardo Greco', cls:'1ª B', line:'verde', stop:3, parent:'greco', presence:'present' },
+    { id:'chiara', f:true, name:'Chiara Russo', cls:'4ª B', line:'verde', stop:4, parent:'russo', presence:'present' },
+    { id:'tommaso', name:'Tommaso Gallo', cls:'3ª A', line:'verde', stop:1, parent:'gallo', presence:'present' },
+    { id:'alice', f:true, name:'Alice Conti', cls:'5ª B', line:'verde', stop:4, parent:'conti', presence:'present' },
+    { id:'davide', name:'Davide Ricci', cls:'2ª B', line:'verde', stop:2, parent:'ricci', presence:'absent' },
+    { id:'sara', f:true, name:'Sara Colombo', cls:'1ª A', line:'blu', stop:1, parent:'colombo2', presence:'absent' },
+    { id:'nico', name:'Nicolò Marini', cls:'3ª B', line:'blu', stop:0, parent:'marini', presence:'present' },
+    { id:'giuf', f:true, name:'Giulia Fontana', cls:'2ª C', line:'blu', stop:2, parent:'fontana', presence:'present' },
+    { id:'pietro', name:'Pietro Romano', cls:'4ª A', line:'blu', stop:3, parent:'romano', presence:'present' },
+    { id:'elisa', f:true, name:'Elisa Barbieri', cls:'5ª C', line:'blu', stop:1, parent:'barbieri', presence:'absent' },
+    { id:'marco', name:'Marco Villa', cls:'1ª C', line:'blu', stop:2, parent:'villa', presence:'absent' }
+  ];
+  const K = {}; kids.forEach(k => { k.late = false; k.missed = false; k.added = false; K[k.id] = k; });
+  const vols = [
+    { id:'marta', name:'Marta Rossi', kit:true, avail:[1,2,4], exc:{}, out:false },
+    { id:'paolo', name:'Paolo Verdi', kit:false, avail:[1,3], out:false },
+    { id:'anna', name:'Anna Ferrari', kit:true, avail:[1,2], out:false, covering:false },
+    { id:'giorgio', name:'Giorgio Sala', kit:true, avail:[1,4], out:false },
+    { id:'elena', name:'Elena Riva', kit:false, avail:[1,3], out:false },
+    { id:'carlo', name:'Carlo Fumagalli', kit:true, avail:[0,1], out:false, covering:false }
+  ];
+  const V = {}; vols.forEach(v => V[v.id] = v);
+  return {
+    phase:0, persona:'genitore', tab:'presenze', loggedIn:false, screen:'accesso',
+    K, kids, V, vols,
+    shifts: { verde:{ vols:['marta','paolo'], backups:['anna'] }, blu:{ vols:['giorgio','elena'], backups:['carlo'] } },
+    lineStatus:{ verde:'ok', blu:'ok' },
+    esc:{ verde:null, blu:null },
+    appello:{ open:false, stop:0, checked:{}, delivered:false, adding:false, deliveredAt:null },
+    inbox:{ parent:[], vol:[], admin:[] },
+    seen:{ parent:0, vol:0, admin:0 },
+    regs:[
+      { id:'r1', name:'Ahmed Karimi', kind:'genitore', detail:'1 bambino · Linea Blu, fermata 2', when:'26 ott, 12:05', status:'pending' },
+      { id:'r2', name:'Francesca Pozzi', kind:'genitore', detail:'2 bambini · Linea Verde, fermata 4', when:'26 ott, 9:30', status:'pending' },
+      { id:'r3', name:'Marco Colombo', kind:'volontario', detail:'Da verificare nell\'albo dei volontari civici', when:'25 ott', status:'pending' }
+    ],
+    bozza:null, bozzaStale:false, bozzaExc:0, showBackup:false, lineOpen:'verde', sheet:false, toast:null, regDone:null
+  };
+}
+let S = initState();
+
+/* ---------- helpers ---------- */
+const now = () => PHASES[S.phase].t;
+const L = id => LINES[id];
+const kidsOf = line => S.kids.filter(k => k.line === line);
+const presentOf = line => kidsOf(line).filter(k => k.presence === 'present');
+const giuliaKids = () => S.kids.filter(k => k.parent === 'giulia');
+const giuliaLines = () => [...new Set(giuliaKids().map(k => k.line))];
+const initials = n => n.split(' ').map(s => s[0]).join('').slice(0,2).toUpperCase();
+const first = n => n.split(' ')[0];
+function shiftCount(line){
+  const s = S.shifts[line];
+  return s.vols.filter(v => !S.V[v].out).length + s.backups.filter(v => S.V[v].covering).length;
+}
+function shiftHasKit(line){
+  const s = S.shifts[line];
+  return s.vols.some(v => !S.V[v].out && S.V[v].kit) || s.backups.some(v => S.V[v].covering && S.V[v].kit);
+}
+/* Novembre 2026: l'1 è domenica, quindi i giorni di scuola sono 2–6, 9–13, 16–20, 23–27, 30 (21 giorni). wd: 0 = lunedì. */
+const NOV = []; for (let d = 1; d <= 30; d++){ const wd = (d + 5) % 7; if (wd < 5) NOV.push({ d, wd }); }
+function excList(v, who){
+  const me = who === 'me';
+  return Object.keys(v.exc).map(Number).sort((a, b) => a - b).map(d => `${d} nov: ${v.exc[d] === 'out' ? (me ? 'non ci sono' : 'non c\'è') : (me ? 'ci sono in più' : 'c\'è in più')}`).join(' · ');
+}
+function martaOnLine(line){ return S.shifts[line].vols.includes('marta') || S.shifts[line].backups.includes('marta'); }
+function push(aud, n){ S.inbox[aud].unshift(Object.assign({ t: now(), kind:'info', sms:false }, n)); }
+function notifyParents(line, n){ if (giuliaLines().includes(line)) push('parent', n); }
+function notifyVols(line, n){ if (martaOnLine(line)) push('vol', n); }
+function notifyAdmin(n){ push('admin', n); }
+let MODE = 'demo';   /* 'demo' = prototipo interattivo con regia · 'mappa' = tutte le schermate per ruolo e flusso */
+let QUIET = false;   /* vero mentre si costruiscono le istantanee della mappa: niente toast, niente timer */
+function toast(msg){ if (QUIET) return; S.toast = msg; clearTimeout(toast._t); toast._t = setTimeout(() => { S.toast = null; render(); }, 2600); }
+const STATUS_LABEL = { ok:'Parte regolarmente', cancelled:'Annullata: sotto soglia', reactivated:'Riattivata: soglia raggiunta', cancelled_final:'Annullata per domani', cancelled_vol:'Annullata: volontari insufficienti' };
+const lineRuns = line => ['ok','reactivated'].includes(S.lineStatus[line]);
+
+/* ---------- regole ---------- */
+function evalThreshold(line, reason){
+  const Ln = L(line), n = presentOf(line).length, st = S.lineStatus[line];
+  if (n < Ln.threshold && ['ok','reactivated'].includes(st) && S.phase >= 1 && S.phase < 3){
+    S.lineStatus[line] = 'cancelled';
+    notifyParents(line, { kind:'warn', sms:true, title:`${Ln.name} annullata per domani`, body:`Solo ${n} bambini presenti, minimo ${Ln.threshold}. Si riattiva se entro le 21:00 si raggiunge la soglia.` });
+    notifyVols(line, { kind:'warn', sms:true, title:`${Ln.name} annullata per domani`, body:`${n} bambini presenti su un minimo di ${Ln.threshold}. Il turno è sospeso, salvo riattivazione entro le 21:00.` });
+    notifyAdmin({ kind:'warn', title:`${Ln.name} sotto soglia`, body:`${n} presenti alle ${reason === 'close' ? '18:00' : now().slice(4)}, minimo ${Ln.threshold}. Annullata, riattivabile fino alle 21:00.` });
+  } else if (n >= Ln.threshold && st === 'cancelled' && S.phase < 3){
+    S.lineStatus[line] = 'reactivated';
+    notifyParents(line, { kind:'ok', sms:true, title:`${Ln.name} riattivata`, body:`Raggiunti ${n} bambini: il pedibus di domani parte alle ${Ln.start}.` });
+    notifyVols(line, { kind:'ok', sms:true, title:`${Ln.name} riattivata`, body:`${n} bambini presenti: il turno di domani è confermato.` });
+    notifyAdmin({ kind:'ok', title:`${Ln.name} riattivata`, body:`${n} presenti alle ${now().slice(4)}: soglia raggiunta.` });
+  }
+}
+/* Cambia una presenza e applica le regole; ritorna il messaggio per il toast (null se nulla è cambiato). */
+function applyPresence(id, val){
+  const k = S.K[id]; if (k.presence === val) return null;
+  k.presence = val;
+  if (S.phase < 1) return val === 'absent' ? 'Assenza segnalata.' : 'Assenza annullata.';
+  k.late = true;
+  const Ln = L(k.line), what = val === 'absent' ? 'assente domani' : 'assenza annullata, domani c\'è';
+  notifyVols(k.line, { kind:'warn', title:`${k.name}: ${what} (modifica tardiva)`, body:`Segnato da Giulia Bianchi alle ${now().slice(4)} · ${Ln.name}, fermata ${k.stop + 1}.` });
+  notifyAdmin({ kind:'info', title:`Modifica tardiva: ${k.name}, ${what}`, body:`${Ln.name}, fermata ${k.stop + 1} · segnato da Giulia Bianchi alle ${now().slice(4)}.` });
+  if (['cancelled_final','cancelled_vol'].includes(S.lineStatus[k.line])) return 'Registrato. La linea però è annullata per domani.';
+  evalThreshold(k.line, 'late');
+  return 'Modifica tardiva: i volontari di turno sono avvisati.';
+}
+function setPresence(id, val){ const msg = applyPresence(id, val); if (msg) toast(msg); }
+function escalate(line, who){
+  const Ln = L(line), s = S.shifts[line];
+  const missing = s.vols.filter(v => S.V[v].out).map(v => S.V[v].name);
+  const backups = s.backups.filter(v => !S.V[v].covering).map(v => S.V[v].name);
+  S.esc[line] = { step: shiftCount(line) >= Ln.minVol ? 'covered' : 'backup', since: now(), missing };
+  notifyVols(line, { kind:'warn', sms:true, title:`${who} non può venire`, body:`${Ln.name}, turno delle ${Ln.start}: ${shiftCount(line)} ${shiftCount(line) === 1 ? 'volontario' : 'volontari'} su ${Ln.minVol}. Avvisati i backup${backups.length ? ' (' + backups.join(', ') + ')' : ''}; dopo 10 minuti l'avviso va a tutti.` });
+  notifyAdmin({ kind:'warn', sms:true, title:`${Ln.name}: ${who} non può venire`, body:`Turno delle ${Ln.start} a ${shiftCount(line)} su ${Ln.minVol}. Escalation partita alle ${now().slice(4)}.` });
+}
+function deliverLine(line, at){
+  const Ln = L(line), onBoard = presentOf(line).filter(k => line !== 'verde' || S.appello.checked[k.id]);
+  const mine = onBoard.filter(k => k.parent === 'giulia');
+  if (mine.length) push('parent', { kind:'ok', title:`${mine.map(k => first(k.name)).join(' e ')} ${mine.length > 1 ? 'sono stati consegnati' : (mine[0].f ? 'è stata consegnata' : 'è stato consegnato')} a scuola alle ${at}`, body:`${Ln.name} · ${onBoard.length} bambini consegnati · volontari: ${shiftNames(line)}.` });
+  notifyAdmin({ kind:'ok', title:`${Ln.name} consegnata alle ${at}`, body:`${onBoard.length} bambini a scuola. Appello chiuso da ${shiftNames(line)}.` });
+}
+function shiftNames(line){
+  const s = S.shifts[line];
+  return s.vols.filter(v => !S.V[v].out).concat(s.backups.filter(v => S.V[v].covering)).map(v => first(S.V[v].name)).join(', ');
+}
+function onEnter(p){
+  if (p === 1){
+    Object.keys(LINES).forEach(l => evalThreshold(l, 'close'));
+    const mine = giuliaKids().filter(k => k.presence === 'present' && lineRuns(k.line));
+    if (mine.length) push('parent', { kind:'info', title:`Domani ${mine.map(k => first(k.name)).join(' e ')} ${mine.length > 1 ? 'sono attesi' : (mine[0].f ? 'è attesa' : 'è atteso')} alla fermata`, body:'Assenze chiuse alle 18:00. Puoi ancora segnalarne una: sarà tardiva e i volontari avvisati.' });
+    notifyAdmin({ kind:'info', title:'Assenze chiuse alle 18:00', body:`Presenti domani: Verde ${presentOf('verde').length}, Blu ${presentOf('blu').length}. Modifiche da ora in poi sono tardive.` });
+  }
+  if (p === 2) applyPresence('sofia', 'present'); /* Giulia annulla l'assenza di Sofia: modifica tardiva sulla Blu, visibile nella sua schermata */
+  if (p === 3){
+    Object.keys(LINES).forEach(l => { if (S.lineStatus[l] === 'cancelled'){ S.lineStatus[l] = 'cancelled_final'; notifyParents(l, { kind:'warn', sms:true, title:`${L(l).name}: annullamento definitivo`, body:'Soglia non raggiunta entro le 21:00. Domani il pedibus non parte.' }); notifyVols(l, { kind:'warn', sms:true, title:`${L(l).name}: turno di domani annullato`, body:'Soglia non raggiunta entro le 21:00.' }); } });
+    notifyAdmin({ kind:'info', title:'Soglie chiuse alle 21:00', body:`Verde: ${presentOf('verde').length} presenti, ${STATUS_LABEL[S.lineStatus.verde].toLowerCase()}. Blu: ${presentOf('blu').length} presenti, ${STATUS_LABEL[S.lineStatus.blu].toLowerCase()}.` });
+  }
+  if (p === 4){ S.V.paolo.out = true; escalate('verde', 'Paolo Verdi'); }
+  if (p === 5){
+    S.V.anna.covering = true;
+    const ok = shiftCount('verde') >= L('verde').minVol;
+    S.esc.verde = { step: ok ? 'covered' : 'backup', since: now(), missing: S.esc.verde ? S.esc.verde.missing : [] };
+    notifyVols('verde', { kind: ok ? 'ok' : 'warn', title:'Anna Ferrari copre il turno', body: ok ? `Linea Verde al completo: ${shiftCount('verde')} su ${L('verde').minVol}, kit presente.` : `Linea Verde ancora a ${shiftCount('verde')} su ${L('verde').minVol}: l'avviso va a tutti i volontari.` });
+    notifyAdmin({ kind: ok ? 'ok' : 'warn', title:'Anna Ferrari copre la Verde', body: ok ? 'Turno completo, kit presente.' : `Turno ancora sotto il minimo (${shiftCount('verde')} su ${L('verde').minVol}).` });
+  }
+  if (p === 6){
+    Object.keys(LINES).forEach(l => {
+      if (!lineRuns(l)) return;
+      if (shiftCount(l) < L(l).minVol){
+        S.lineStatus[l] = 'cancelled_vol'; if (S.esc[l]) S.esc[l].step = 'cancelled';
+        notifyParents(l, { kind:'warn', sms:true, title:`${L(l).name} annullata stamattina`, body:`Volontari insufficienti (${shiftCount(l)} su ${L(l).minVol}) un'ora prima della partenza. Accompagnate i bambini voi.` });
+        notifyVols(l, { kind:'warn', sms:true, title:`${L(l).name} annullata`, body:'Turno sotto il minimo un\'ora prima della partenza. Famiglie avvisate via push e SMS.' });
+        notifyAdmin({ kind:'warn', sms:true, title:`${L(l).name} annullata: volontari insufficienti`, body:`${shiftCount(l)} su ${L(l).minVol}. Famiglie avvisate alle 6:30.` });
+      }
+    });
+    if (lineRuns('verde')){ S.appello.open = true; S.appello.stop = 0; notifyVols('verde', { kind:'info', title:'Si parte: appello al capolinea', body:`Linea Verde, piazza Repubblica · ${presentOf('verde').length} bambini attesi oggi · ${shiftNames('verde')}.` }); }
+  }
+  if (p === 7){
+    if (lineRuns('blu')) deliverLine('blu', '8:01');
+    if (S.appello.open && !S.appello.delivered){
+      presentOf('verde').forEach(k => { if (!k.missed) S.appello.checked[k.id] = true; });
+      S.appello.stop = L('verde').stops.length - 1; S.appello.delivered = true; S.appello.deliveredAt = '8:02';
+      deliverLine('verde', '8:02');
+    }
+  }
+}
+/* Porta la demo al passo k e apre la schermata in cui quel passo succede.
+   In avanti conserva quello che l'utente ha fatto; all'indietro riparte da capo e rigioca fino a k. */
+function stepTo(k){
+  k = Math.max(0, Math.min(+k, PHASES.length - 1));
+  if (k < S.phase) S = initState();
+  while (S.phase < k){ S.phase++; onEnter(S.phase); }
+  const [persona, tab] = PHASES[k].scene;
+  Object.assign(S, { loggedIn:true, persona, tab, showBackup:false, sheet:false, toast:null });
+}
+
+/* ---------- azioni ---------- */
+const ACT = {
+  persona(p){ S.persona = p; S.tab = HOME[p]; S.showBackup = false; },
+  tab(t){ S.tab = t; },
+  login(){ S.loggedIn = true; S.tab = HOME[S.persona]; },
+  logout(){ S.loggedIn = false; S.screen = 'accesso'; },
+  screen(s){ S.screen = s; },
+  presence(id, v){ setPresence(id, v); },
+  noshow(){
+    if (S.V.marta.out) return; S.V.marta.out = true; escalate('verde', 'Marta Rossi');
+    toast('Avvisati i backup. Grazie per averlo detto subito.');
+  },
+  backup(){ S.showBackup = !S.showBackup; },
+  apcheck(id){ S.appello.checked[id] = !S.appello.checked[id]; },
+  apadd(){ S.appello.adding = !S.appello.adding; },
+  apaddkid(id){ const k = S.K[id]; k.presence = 'present'; k.added = true; k.stop = S.appello.stop; S.appello.checked[id] = true; S.appello.adding = false; toast(`${first(k.name)} aggiunto: presente con nota.`); },
+  apnext(){
+    const idx = S.appello.stop, st = L('verde').stops;
+    presentOf('verde').filter(k => k.stop === idx && !S.appello.checked[k.id]).forEach(k => {
+      k.missed = true;
+      if (k.parent === 'giulia') push('parent', { kind:'warn', sms:true, title:`${first(k.name)} non era alla fermata`, body:`${st[idx].name} alle ${st[idx].time}: era atteso ma non c'era. Il pedibus è ripartito.` });
+      notifyAdmin({ kind:'warn', title:`${k.name} non trovato alla fermata ${idx + 1}`, body:`Linea Verde, ${st[idx].name} alle ${st[idx].time}. Genitore avvisato.` });
+    });
+    if (idx < st.length - 1) S.appello.stop = idx + 1;
+  },
+  apdeliver(){ S.appello.delivered = true; S.appello.deliveredAt = S.phase >= 7 ? '8:02' : '7:58'; deliverLine('verde', S.appello.deliveredAt); toast('Consegna confermata: genitori avvisati.'); },
+  avail(d){ const a = S.V.marta.avail, i = a.indexOf(+d); if (i >= 0) a.splice(i, 1); else a.push(+d); },
+  approve(id){ const r = S.regs.find(r => r.id === id); r.status = 'approved'; toast(`${r.name}: iscrizione approvata, notifica inviata.`); },
+  reject(id){ const r = S.regs.find(r => r.id === id); r.status = 'rejected'; toast(`${r.name}: iscrizione rifiutata.`); },
+  bozza(){ S.bozza = 'draft'; S.bozzaExc = Object.keys(S.V.marta.exc).length; },
+  sendbozza(){ S.bozza = 'sent'; toast('Bozza inviata ai 30 volontari. Silenzio-assenso il 31 ottobre.'); },
+  regen(){ S.bozzaStale = false; S.bozza = 'draft'; S.bozzaExc = Object.keys(S.V.marta.exc).length; toast('Bozza rigenerata con le nuove disponibilità: da rivedere e reinviare.'); },
+  exc(d){
+    d = +d; const m = S.V.marta, dflt = m.avail.includes((d + 5) % 7);
+    if (m.exc[d]) delete m.exc[d]; else m.exc[d] = dflt ? 'out' : 'in';
+    if (S.bozza){ /* la bozza esiste già: l'eccezione non la cambia da sola, l'amministratore deve rivederla */
+      S.bozzaStale = true;
+      notifyAdmin({ kind:'warn', title:'Marta Rossi: disponibilità di novembre cambiata dopo la bozza', body:`${!m.exc[d] ? `Tolta l'eccezione del ${d} nov` : `${d} nov: ${m.exc[d] === 'out' ? 'non c\'è' : 'c\'è in più'}`}. Rigenera la bozza o correggi a mano.` });
+      toast('Segnato. La bozza è già stata fatta: l\'amministratore è avvisato.');
+    } else toast(!m.exc[d] ? 'Eccezione tolta.' : m.exc[d] === 'out' ? `${d} novembre: non ci sei. La bozza ne terrà conto.` : `${d} novembre: ci sei in più. La bozza ne terrà conto.`);
+  },
+  step(k){ stepTo(+k); },
+  next(){ stepTo(S.phase + 1); },
+  reset(){ S = initState(); },
+  sheet(){ S.sheet = !S.sheet; },
+  lineopen(id){ S.lineOpen = S.lineOpen === id ? null : id; },
+  regdone(){ S.screen = 'accesso'; S.regDone = null; },
+  mode(m){ MODE = m; S.sheet = false; if (m === 'mappa') GAL.filter = 'all'; window.scrollTo(0, 0); },
+  galfilter(id){ GAL.filter = id; window.scrollTo(0, 0); }
+};
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  if (el.tagName === 'A') e.preventDefault();
+  const f = ACT[el.dataset.act]; if (f) f(el.dataset.a, el.dataset.b);
+  render();
+});
+document.addEventListener('submit', e => {
+  if (e.target.id !== 'regform') return;
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const name = (fd.get('nome') || '').toString().trim() || 'Nuovo genitore';
+  const line = (fd.get('fermata') || '').toString();
+  S.regs.unshift({ id:'r' + Date.now(), name, kind:'genitore', detail:`1 bambino · ${line}`, when:'adesso', status:'pending' });
+  notifyAdmin({ kind:'info', title:`Nuova iscrizione da ${name}`, body:`1 bambino · ${line}. Da approvare.` });
+  S.regDone = name; S.screen = 'iscrizione_ok';
+  render();
+});
+
+/* ---------- viste comuni ---------- */
+const unread = aud => Math.max(0, S.inbox[aud].length - S.seen[aud]);
+const audOf = { genitore:'parent', volontaria:'vol', admin:'admin' };
+function navItem(tab, label, icon, cnt){
+  return `<a href="#${tab}" data-act="tab" data-a="${tab}" class="${S.tab === tab ? 'on' : ''}">${ic(icon, 22)}${label}${cnt ? `<span class="cnt">${cnt}</span>` : ''}</a>`;
+}
+function topbar(){
+  const p = S.persona;
+  return `<div class="top">
+    <div class="pills" role="tablist" aria-label="Ruolo">
+      <button class="pill ${p === 'genitore' ? 'on' : ''}" data-act="persona" data-a="genitore">Genitore</button>
+      <button class="pill ${p === 'volontaria' ? 'on' : ''}" data-act="persona" data-a="volontaria">Volontaria</button>
+      <button class="pill ${p === 'admin' ? 'on' : ''}" data-act="persona" data-a="admin">Admin</button>
+    </div>
+    <span class="clock">${ic('clock', 14)}<span class="mono">${now()}</span></span>
+  </div>`;
+}
+function lineDot(l){ return `<span class="dotc" style="background:${L(l).color}"></span>`; }
+function statusBadge(l){
+  const st = S.lineStatus[l];
+  const cls = lineRuns(l) ? 'b-ok' : 'b-danger';
+  return `<span class="badge ${cls}">${lineRuns(l) ? 'parte' : 'annullata'}</span>`;
+}
+function inboxView(aud, title){
+  const list = S.inbox[aud];
+  return `<div class="stack">
+    <div class="head"><div><h1>${title}</h1><p class="sub">${list.length ? list.length + ' avvisi' : 'Nessun avviso per ora'}</p></div></div>
+    ${list.length ? `<div>${list.map(n => `<div class="notif">
+      ${ic(n.kind === 'warn' ? 'warn' : n.kind === 'ok' ? 'check' : 'bell', 18)}
+      <div class="grow"><div class="nt">${n.title}</div><div class="nb">${n.body}</div>${n.sms ? `<div class="hstack" style="margin-top:4px"><span class="badge b-muted">${ic('sms', 12)} anche via SMS</span></div>` : ''}</div>
+      <div class="nm mono">${n.t}</div>
+    </div>`).join('')}</div>` : `<div class="card"><p class="small">Gli avvisi arrivano come notifiche push sul telefono. Qui restano in archivio. Quelli urgenti arrivano anche via SMS.</p></div>`}
+  </div>`;
+}
+
+/* ---------- accesso e iscrizione ---------- */
+function accessoView(){
+  return `<div class="screen"><div class="login">
+    <div class="logo">OC</div>
+    <div style="text-align:center"><h1 style="font-size:26px">Pedibus Vedano</h1><p class="sub">Officina Civica</p></div>
+    <div class="stack" style="width:100%;margin-top:28px">
+      <div class="field"><label>Entra come</label>
+        <div class="pills" style="justify-content:stretch"><button class="pill grow ${S.persona === 'genitore' ? 'on' : ''}" data-act="persona" data-a="genitore">Giulia · genitore</button><button class="pill grow ${S.persona === 'volontaria' ? 'on' : ''}" data-act="persona" data-a="volontaria">Marta · volontaria</button><button class="pill grow ${S.persona === 'admin' ? 'on' : ''}" data-act="persona" data-a="admin">Admin</button></div>
+      </div>
+      <button class="btn btn-primary btn-lg btn-block" data-act="login">${ic('finger', 22)} Entra con la passkey</button>
+      <p class="small" style="text-align:center">Usa lo sblocco del telefono: impronta o Face ID. Niente password da ricordare.${S.persona === 'admin' ? ' Per l\'amministratore serve anche un secondo fattore.' : ''}</p>
+      <div class="divider"><span></span>oppure<span></span></div>
+      <div class="field"><label for="tel">Numero di telefono</label><input id="tel" class="input" type="tel" placeholder="+39 3xx xxx xxxx"></div>
+      <button class="btn btn-outline btn-block" data-act="login">Ricevi un codice via SMS</button>
+      <p class="small" style="text-align:center">Preferisci un link via email? <a href="#email" data-act="login">Usa l'email</a></p>
+    </div>
+    <div class="stack" style="align-items:center;margin-top:24px">
+      <span class="badge b-muted">${ic('shield', 12)} Dati conservati nell'Unione Europea</span>
+      <p style="font-size:14px">Prima volta qui? <a href="#iscrizione" data-act="screen" data-a="iscrizione" style="font-weight:600">Iscrivi i tuoi bambini</a></p>
+    </div>
+  </div></div>`;
+}
+function iscrizioneView(){
+  const opts = Object.values(LINES).flatMap(l => l.stops.slice(0, -1).map((s, i) => `<option>${l.name} · ${i + 1}, ${s.name}</option>`)).join('');
+  return `<div class="top"><button class="btn btn-sm btn-outline" data-act="screen" data-a="accesso">${ic('back', 16)} Indietro</button><span class="small">Passo 1 di 2</span></div>
+  <form id="regform" class="screen"><div class="stack" style="gap:18px">
+    <div><h1>Iscrivi i tuoi bambini</h1><p class="sub">L'amministratore approva l'iscrizione. Riceverai una notifica.</p></div>
+    <div class="stack-s"><h2>Genitore principale</h2>
+      <div class="field"><label for="nome">Nome e cognome</label><input id="nome" name="nome" class="input" placeholder="Nome e cognome" required></div>
+      <div class="field"><label for="rtel">Telefono</label><input id="rtel" name="tel" class="input" type="tel" placeholder="+39 3xx xxx xxxx"></div>
+      <div class="field"><label for="remail">Email</label><input id="remail" name="email" class="input" type="email" placeholder="nome@esempio.it"></div>
+    </div>
+    <div class="stack-s"><h2>Bambino</h2>
+      <div class="card">
+        <div class="field"><label for="bimbo">Nome e cognome</label><input id="bimbo" name="bimbo" class="input" placeholder="Nome e cognome del bambino"></div>
+        <div class="grid2">
+          <div class="field"><label for="scuola">Scuola</label><select id="scuola" name="scuola" class="input"><option>Primaria Vedano</option><option>Infanzia Vedano</option></select></div>
+          <div class="field"><label for="classe">Classe</label><select id="classe" name="classe" class="input"><option>1ª A</option><option>2ª B</option><option>3ª C</option><option>4ª A</option><option>5ª B</option></select></div>
+        </div>
+        <div class="field" style="border-top:1px dashed var(--border);padding-top:10px"><label for="fermata">Fermata dove sale</label><select id="fermata" name="fermata" class="input">${opts}</select><span class="small">Si sceglie a parte: non dipende da scuola e classe.</span></div>
+      </div>
+      <button type="button" class="btn btn-dashed btn-block">${ic('plus', 16)} Aggiungi un altro bambino</button>
+    </div>
+    <label class="check"><input type="checkbox" name="privacy" required><span>Ho letto l'<a href="#informativa">informativa privacy</a> (versione 1.0) e acconsento al trattamento dei dati per il servizio Pedibus. Titolare: comitato Officina Civica.</span></label>
+    <button type="submit" class="btn btn-primary btn-lg btn-block">Invia l'iscrizione</button>
+  </div></form>`;
+}
+function iscrizioneOkView(){
+  return `<div class="screen"><div class="login" style="padding-top:80px;text-align:center">
+    <span class="av av-accent" style="width:64px;height:64px">${ic('check', 28)}</span>
+    <h1>Iscrizione inviata</h1>
+    <p class="sub">Grazie ${S.regDone || ''}. L'amministratore la verifica e la approva: riceverai una notifica. Fino ad allora il bambino non risulta iscritto.</p>
+    <button class="btn btn-outline btn-block" data-act="regdone" style="margin-top:12px">Torna all'accesso</button>
+    <p class="small" style="margin-top:8px">Nel pannello dell'amministratore la trovi tra le iscrizioni in attesa.</p>
+  </div></div>`;
+}
+
+/* ---------- genitore ---------- */
+function presenzeView(){
+  const kids = giuliaKids();
+  const closed = S.phase >= 1;
+  const chip = closed
+    ? `<div class="alert a-warn">${ic('clock', 16)}<div class="body"><b>Assenze chiuse alle 18:00</b><span>Puoi ancora segnalare o annullare un'assenza: la modifica viene segnata come tardiva e i volontari di turno sono avvisati.</span></div></div>`
+    : `<div class="alert">${ic('clock', 16)}<div class="body"><b>Segnala le assenze entro le 18:00</b><span>I tuoi bambini sono presenti salvo avviso. Mancano 30 minuti.</span></div></div>`;
+  const day = S.phase >= 4 ? 'oggi' : 'domani';
+  return `<div class="stack">
+    <div><h1>Presenze</h1><p class="sub">${S.phase >= 4 ? 'Oggi' : 'Domani'}, martedì 27 ottobre</p></div>
+    ${chip}
+    ${kids.map(k => { const abs = k.presence === 'absent'; return `<div class="card" style="${abs ? 'background:var(--muted-bg)' : ''}">
+      <div class="hstack" style="gap:12px"><span class="av ${abs ? '' : 'av-accent'}">${initials(k.name)}</span><div class="grow"><div class="title">${k.name}</div><div class="meta">${k.cls} · ${L(k.line).name}, fermata ${k.stop + 1} (${L(k.line).stops[k.stop].name})</div></div>${k.late ? '<span class="badge b-accent">tardiva</span>' : ''}</div>
+      <div class="pair">
+        <span class="state ${abs ? 'b-danger' : 'b-ok'}">${abs ? ic('x', 14, 2.5) + ` Assente ${day}` : ic('check', 14) + ` Presente ${day}`}</span>
+        ${abs ? `<button class="btn btn-outline state" data-act="presence" data-a="${k.id}" data-b="present">${ic('check', 14)} Annulla l'assenza</button>` : `<button class="btn btn-danger state" data-act="presence" data-a="${k.id}" data-b="absent">${ic('x', 14, 2.5)} Segnala un'assenza</button>`}
+      </div>
+      <span class="small">${abs ? `Non ${k.f ? 'la' : 'lo'} aspettano alla fermata.` : `Salvo avviso: ${k.f ? 'la' : 'lo'} aspettano alla fermata alle ${L(k.line).stops[k.stop].time}.`}</span>
+    </div>`; }).join('')}
+    ${giuliaLines().map(l => {
+      const Ln = L(l), n = presentOf(l).length, runs = lineRuns(l);
+      const pre = S.phase < 1 && n < Ln.threshold; /* prima delle 18:00 la soglia non è ancora stata applicata */
+      const head = pre ? `${Ln.name}: per ora sotto soglia` : `${Ln.name}: ${STATUS_LABEL[S.lineStatus[l]].toLowerCase()}`;
+      const delivered = l === 'verde' ? (S.appello.delivered ? S.appello.deliveredAt : null) : (S.phase >= 7 && runs ? '8:01' : null);
+      return `<div class="alert ${!runs ? 'a-danger' : pre ? 'a-warn' : 'a-ok'}">${lineDot(l)}<div class="body"><b>${head}</b><span>${n} bambini presenti ${day} · soglia minima ${Ln.threshold}${pre ? ' · si decide alle 18:00' : ''}${delivered ? ` · consegnati a scuola alle ${delivered}` : ''}</span></div></div>`;
+    }).join('')}
+    <p class="small">Il backup che hai indicato (nonna Rita) può segnare presenze e assenze al posto tuo, nient'altro.</p>
+  </div>`;
+}
+function profiloGenitoreView(){
+  const kids = giuliaKids();
+  return `<div class="stack">
+    <div class="hstack" style="gap:12px"><span class="av av-accent" style="width:52px;height:52px;font-size:18px">GB</span><div><h1>Giulia Bianchi</h1><p class="sub">Genitore principale · +39 333 123 4567</p></div></div>
+    <div class="stack-s"><h2>I tuoi bambini</h2><div class="rows">${kids.map(k => `<div class="row"><span class="av">${initials(k.name)}</span><div class="grow"><div class="title">${k.name}</div><div class="meta">Primaria Vedano · ${k.cls} · ${L(k.line).name}, fermata ${k.stop + 1}</div></div><span class="badge b-ok">iscritto</span></div>`).join('')}</div></div>
+    <div class="stack-s"><h2>Backup presenze</h2><div class="card"><div class="hstack" style="gap:12px"><span class="av">RB</span><div class="grow"><div class="title">Rita Bianchi (nonna)</div><div class="meta">+39 338 765 4321 · può solo segnare presenze e assenze</div></div></div></div></div>
+    <div class="stack-s"><h2>Contatti d'emergenza</h2><p class="small">Li vede solo il volontario di turno sulla linea dei tuoi bambini, e ogni consultazione resta registrata. Nessun dato sanitario.</p><div class="rows"><div class="row" style="min-height:56px"><span class="grow">Giulia Bianchi (mamma)</span><span class="meta mono">+39 333 123 4567</span></div><div class="row" style="min-height:56px"><span class="grow">Andrea Bianchi (papà)</span><span class="meta mono">+39 335 987 6543</span></div></div></div>
+    <div class="stack-s"><h2>Privacy e pettorine</h2><div class="card"><div class="between"><span>Informativa privacy</span><span class="badge b-muted">v. 1.0 · 15 set 2026</span></div><div class="between"><span>Pettorine consegnate</span><span class="meta">n. 7 (Luca), n. 8 (Sofia)</span></div><div class="between"><span>Dati conservati</span><span class="meta">Unione Europea · fino a fine anno + 30 giorni</span></div></div></div>
+    <button class="btn btn-outline btn-block" data-act="logout">${ic('logout', 18)} Esci</button>
+  </div>`;
+}
+
+/* ---------- volontaria ---------- */
+function turniView(){
+  const Ln = L('verde'), s = S.shifts.verde, esc = S.esc.verde, out = S.V.marta.out;
+  const team = s.vols.map(v => S.V[v]).concat(s.backups.map(v => S.V[v]).filter(v => v.covering));
+  const escText = !esc ? '' : esc.step === 'covered' ? `<div class="alert a-ok">${ic('check', 16)}<div class="body"><b>Turno coperto</b><span>${esc.missing.join(' e ')} non ${esc.missing.length > 1 ? 'vengono' : 'viene'}: Anna Ferrari copre. ${shiftCount('verde')} volontari su ${Ln.minVol}, kit presente.</span></div></div>`
+    : esc.step === 'cancelled' ? `<div class="alert a-danger">${ic('warn', 16)}<div class="body"><b>Pedibus annullato</b><span>Turno sotto il minimo un'ora prima della partenza. Famiglie avvisate via push e SMS.</span></div></div>`
+    : `<div class="alert a-warn">${ic('warn', 16)}<div class="body"><b>Turno scoperto: ${shiftCount('verde')} su ${Ln.minVol}</b><span>${esc.missing.join(' e ')} non ${esc.missing.length > 1 ? 'possono' : 'può'} venire (dalle ${esc.since.slice(4)}). Avvisati i backup del giorno; dopo 10 minuti l'avviso va a tutti i volontari, poi al gestore turni.</span></div></div>`;
+  return `<div class="stack">
+    <div class="head"><div><h1>I miei turni</h1><p class="sub">Settimana 26 – 30 ottobre</p></div><a href="#profilo" data-act="tab" data-a="profilo" style="font-size:13px;font-weight:500">Disponibilità</a></div>
+    <div class="card card-accent">
+      <h2 style="color:var(--accent-fg)">Prossimo turno</h2>
+      <div><div class="title" style="font-size:18px">${S.phase >= 4 ? 'Oggi' : 'Domani'}, martedì 27 · ${Ln.start}</div><div class="meta">${Ln.name} · capolinea ${Ln.stops[0].name} · ${presentOf('verde').length} bambini attesi</div></div>
+      ${lineRuns('verde') ? '' : `<span class="badge b-danger">${STATUS_LABEL[S.lineStatus.verde]}</span>`}
+      <div class="stack-s">${team.map(v => `<div class="hstack"><span class="av av-s">${initials(v.name)}</span><span class="${v.out ? 'meta' : ''}" style="${v.out ? 'text-decoration:line-through' : ''}">${v.name}${v.id === 'marta' ? ' (tu)' : ''}</span>${v.kit && !v.out ? `<span class="badge b-ok">${ic('kit', 12)} kit</span>` : ''}${v.out ? '<span class="badge b-danger">non viene</span>' : ''}${v.covering ? '<span class="badge b-accent">riserva</span>' : ''}</div>`).join('')}</div>
+      ${escText}
+      <div class="seg" style="gap:8px">
+        <button class="btn btn-danger" style="min-height:48px" data-act="noshow" ${out || S.phase >= 7 || !lineRuns('verde') ? 'disabled' : ''}>${out ? 'Hai avvisato' : 'Non posso venire'}</button>
+        <button class="btn btn-outline" style="min-height:48px" data-act="backup">Chi è di backup</button>
+      </div>
+      ${S.showBackup ? `<div class="rows">${s.backups.map(v => S.V[v]).map(v => `<div class="row" style="min-height:56px"><span class="av av-s">${initials(v.name)}</span><div class="grow"><div style="font-weight:600">${v.name}</div><div class="meta">disponibile il martedì${v.kit ? ' · ha il kit' : ''}</div></div>${v.covering ? '<span class="badge b-accent">copre il turno</span>' : ''}</div>`).join('')}</div>` : ''}
+    </div>
+    <div class="rows">
+      ${[['lun','26','Libero','', ''],['mar','27','Turno · Linea Verde','7:30','cur'],['mer','28','Backup · Linea Verde','riserva',''],['gio','29','Non disponibile','',''],['ven','30','Turno · Linea Blu','7:30','']].map(([d, n, t, b, c]) => `<div class="row" style="min-height:56px;${c ? 'background:var(--accent-soft)' : ''}"><span style="width:44px;display:flex;flex-direction:column;align-items:center;line-height:1.1"><small style="font-size:11px;text-transform:uppercase;color:${c ? 'var(--accent-fg)' : 'var(--muted)'}">${d}</small><b style="font-size:18px;${c ? 'color:var(--accent-fg)' : ''}">${n}</b></span><span class="grow" style="font-size:14px;${t.startsWith('Turno') ? 'font-weight:600' : 'color:var(--muted)'}">${t}</span>${b === '7:30' ? '<span class="badge b-dark">7:30</span>' : b ? `<span class="badge b-muted">${b}</span>` : ''}</div>`).join('')}
+    </div>
+    <div class="alert">${ic('cal', 16)}<div class="body"><b>Novembre</b><span>${S.bozza ? 'La bozza dei turni è arrivata: chi non risponde entro il 31 conferma per silenzio-assenso.' : 'La bozza dei turni arriva il 28 ottobre. Chi non risponde entro il 31 conferma per silenzio-assenso.'} ${(n => n ? `Hai ${n} ${n > 1 ? 'eccezioni segnate' : 'eccezione segnata'}.` : 'Un giorno diverso dal solito? Segnalo entro il 27.')(Object.keys(S.V.marta.exc).length)} <a href="#profilo" data-act="tab" data-a="profilo" style="font-weight:600">Eccezioni</a></span></div></div>
+  </div>`;
+}
+function appelloView(){
+  const Ln = L('verde'), A = S.appello, st = Ln.stops;
+  if (!lineRuns('verde') && S.phase >= 6) return `<div class="stack"><div><h1>Appello</h1><p class="sub">Martedì 27 ottobre</p></div><div class="alert a-danger">${ic('warn', 16)}<div class="body"><b>${Ln.name} annullata</b><span>${STATUS_LABEL[S.lineStatus.verde]}. Le famiglie sono state avvisate.</span></div></div></div>`;
+  if (!A.open) return `<div class="stack"><div><h1>Appello</h1><p class="sub">${S.phase >= 4 ? 'Oggi' : 'Domani'}, martedì 27 ottobre</p></div>
+    <div class="card"><div class="hstack">${lineDot('verde')}<span class="title">${Ln.name}</span></div><p class="small">L'appello si apre alle ${Ln.start} al capolinea (${st[0].name}). Attesi ${presentOf('verde').length} bambini su ${kidsOf('verde').length} iscritti, lungo ${st.length - 1} fermate.</p>
+    <div class="rows">${st.map((s, i) => `<div class="stoprow"><span class="stopn ${i === st.length - 1 ? 'end' : ''}">${i === st.length - 1 ? ic('flag', 12, 3) : i + 1}</span><span class="grow" style="font-size:14px">${s.name}${s.note ? ` <span class="meta">· ${s.note}</span>` : ''}</span><span class="meta mono">${s.time}</span><span class="badge b-muted">${presentOf('verde').filter(k => k.stop === i).length || ''}</span></div>`).join('')}</div></div>
+    <p class="small">I contatti d'emergenza dei bambini della linea sono visibili solo durante il turno, dal telefono in alto a destra.</p></div>`;
+  if (A.delivered) return `<div class="stack"><div class="login" style="padding-top:60px;text-align:center"><span class="av" style="width:64px;height:64px;background:var(--ok-soft);color:var(--ok-fg)">${ic('school', 30)}</span><h1>Consegnati a scuola</h1><p class="sub">Alle ${A.deliveredAt} · ${presentOf('verde').filter(k => A.checked[k.id]).length} bambini. I genitori hanno ricevuto la notifica. Da qui la responsabilità passa alla scuola.</p></div>
+    ${presentOf('verde').some(k => k.missed) ? `<div class="alert a-warn">${ic('warn', 16)}<div class="body"><b>Non trovati alla fermata</b><span>${presentOf('verde').filter(k => k.missed).map(k => k.name).join(', ')}. Genitori avvisati.</span></div></div>` : ''}
+    <p class="small" style="text-align:center">Grazie Marta. Il prossimo turno è venerdì sulla Linea Blu.</p></div>`;
+  const idx = A.stop, atSchool = idx === st.length - 1;
+  const expected = presentOf('verde').filter(k => k.stop === idx);
+  const onBoard = presentOf('verde').filter(k => A.checked[k.id]).length;
+  const addable = kidsOf('verde').filter(k => k.presence !== 'present');
+  return `<div class="stack" style="gap:12px">
+    <div class="between"><div class="hstack">${lineDot('verde')}<span class="title" style="font-size:17px">${Ln.name}</span></div><button class="btn btn-outline iconbtn" aria-label="Contatti d'emergenza">${ic('phone', 20)}</button></div>
+    <div class="stack-s">
+      <div class="between"><h2>${atSchool ? 'Arrivo' : `Fermata ${idx + 1} di ${st.length - 1}`}</h2><span class="small mono">${atSchool ? `${onBoard} a bordo` : `${expected.filter(k => A.checked[k.id]).length} di ${expected.length} presenti`}</span></div>
+      <div class="progress" style="grid-template-columns:repeat(${st.length},minmax(0,1fr))">${st.map((s, i) => `<span class="${i < idx ? 'done' : i === idx ? 'cur' : ''}"></span>`).join('')}</div>
+      <div class="hstack">${ic(atSchool ? 'school' : 'pin', 18)}<span style="font-size:18px;font-weight:700">${st[idx].name}</span><span class="meta mono">${st[idx].time}</span></div>
+    </div>
+    ${atSchool ? `<div class="rows">${presentOf('verde').filter(k => A.checked[k.id]).map(k => `<div class="row" style="min-height:52px"><span class="av av-s">${initials(k.name)}</span><span class="grow" style="font-weight:600">${k.name}</span><span class="meta">${k.cls}</span></div>`).join('')}</div>`
+    : expected.length ? `<div class="rows">${expected.map(k => `<button class="row row-btn" data-act="apcheck" data-a="${k.id}" style="${A.checked[k.id] ? '' : 'background:var(--muted-bg)'}"><span class="av">${initials(k.name)}</span><span class="grow"><span class="title" style="display:block;font-size:17px">${k.name}</span><span class="meta">${k.cls}${k.late ? ' · modifica tardiva' : ''}${k.added ? ' · aggiunto alla fermata' : ''}</span></span><span class="chk ${A.checked[k.id] ? 'on' : ''}">${ic('check', 22, 3)}</span></button>`).join('')}</div>` : `<div class="card"><p class="small">Nessun bambino atteso a questa fermata.</p></div>`}
+    ${!atSchool ? `<button class="btn btn-dashed btn-block" data-act="apadd">${ic('plus', 16)} ${A.adding ? 'Chiudi' : 'Non è in lista? Aggiungi un bambino iscritto'}</button>` : ''}
+    ${A.adding ? `<div class="rows">${addable.length ? addable.map(k => `<button class="row row-btn" data-act="apaddkid" data-a="${k.id}" style="min-height:56px"><span class="av av-s">${initials(k.name)}</span><span class="grow"><span style="font-weight:600">${k.name}</span> <span class="meta">${k.cls} · segnato assente</span></span>${ic('plus', 18)}</button>`).join('') : '<div class="row"><span class="small">Tutti gli iscritti della linea sono già in lista. Un bambino non iscritto non si prende.</span></div>'}</div><p class="small">Solo bambini con iscrizione approvata. Chi non è iscritto non viene preso: il volontario non può assumersi quella responsabilità.</p>` : ''}
+    <div class="alert" style="margin-top:auto">${ic('users', 16)}<div class="body"><span><b>${onBoard} a bordo</b> · con ${shiftNames('verde').split(', ').filter(n => n !== 'Marta').join(' e ') || 'nessun altro'}${shiftHasKit('verde') ? ' · kit presente' : ' · nessun kit'}</span></div></div>
+  </div>`;
+}
+function appelloFoot(){
+  const A = S.appello, st = L('verde').stops;
+  if (!A.open || A.delivered || (!lineRuns('verde'))) return '';
+  const atSchool = A.stop === st.length - 1;
+  return `<div class="footbar">${atSchool ? `<button class="btn btn-primary btn-lg btn-block" data-act="apdeliver">${ic('school', 20)} Consegnati a scuola</button>` : `<button class="btn btn-primary btn-lg btn-block" data-act="apnext">Prossima fermata ${ic('chev', 20, 2.5)}</button>`}</div>`;
+}
+function profiloVolView(){
+  const m = S.V.marta, days = ['Lun','Mar','Mer','Gio','Ven'], exN = Object.keys(m.exc).length;
+  return `<div class="stack">
+    <div class="hstack" style="gap:12px"><span class="av av-accent" style="width:52px;height:52px;font-size:18px">MR</span><div><h1>Marta Rossi</h1><p class="sub">Volontaria civica · +39 347 222 3344</p></div></div>
+    <div class="stack-s"><h2>Disponibilità settimanale</h2><p class="small">Vale ogni settimana. Nei giorni disponibili in cui non sei di turno fai da riserva.</p>
+      <div class="week">${days.map((d, i) => `<button class="day ${m.avail.includes(i) ? 'on' : ''}" data-act="avail" data-a="${i}" aria-pressed="${m.avail.includes(i)}"><small>${d}</small><b>${m.avail.includes(i) ? 'sì' : 'no'}</b></button>`).join('')}</div></div>
+    <div class="stack-s"><div class="between"><h2>Eccezioni di novembre</h2>${exN ? `<span class="badge b-accent">${exN} ${exN > 1 ? 'giorni' : 'giorno'}</span>` : ''}</div>
+      <p class="small">Un giorno diverso dal solito: tocca per dire «non ci sono» dove saresti disponibile, o «ci sono» dove di solito no. ${S.bozza ? 'La bozza è già stata fatta: ogni modifica avvisa l\'amministratore.' : 'Entro il 27 ottobre: la bozza del 28 ne tiene conto.'}</p>
+      <div class="week" style="gap:6px">${days.map(d => `<small style="text-align:center;font-size:11px;color:var(--muted);text-transform:uppercase">${d}</small>`).join('')}</div>
+      <div class="cal">${NOV.map(({ d, wd }) => { const dflt = m.avail.includes(wd), e = m.exc[d]; return `<button class="cd ${e === 'out' ? 'out' : e === 'in' ? 'in' : dflt ? '' : 'off'}" data-act="exc" data-a="${d}" aria-pressed="${!!e}" aria-label="${d} novembre, ${e === 'out' ? 'non ci sono' : e === 'in' ? 'ci sono' : dflt ? 'disponibile' : 'non disponibile'}"><b>${d}</b><small>${e === 'out' ? 'non ci sono' : e === 'in' ? 'ci sono' : dflt ? 'sì' : 'no'}</small></button>`; }).join('')}</div>
+      ${exN ? `<p class="small">${excList(m, 'me')}.</p>` : ''}
+      <p class="small">Per i turni di novembre l'algoritmo usa settimana ed eccezioni: con 30 volontari su 2 linee tocca circa un turno a settimana a testa.</p></div>
+    <div class="stack-s"><h2>Dotazioni</h2><div class="card"><div class="between"><span class="hstack">${ic('kit', 16)} Kit di primo soccorso</span><span class="badge b-ok">consegnato</span></div><div class="between"><span>Pettorina</span><span class="meta">n. 12</span></div><div class="between"><span>Paletta</span><span class="meta">personale</span></div></div></div>
+    <div class="stack-s"><h2>Requisiti</h2><div class="card"><div class="between"><span>Albo dei volontari civici</span><span class="badge b-ok">verificato</span></div><div class="between"><span>Assicurazione</span><span class="meta">a carico del Comune</span></div><div class="between"><span>Accesso</span><span class="meta">passkey · iPhone di Marta</span></div></div></div>
+    <button class="btn btn-outline btn-block" data-act="logout">${ic('logout', 18)} Esci</button>
+  </div>`;
+}
+
+/* ---------- amministratore ---------- */
+function oggiView(){
+  const pending = S.regs.filter(r => r.status === 'pending').length;
+  const alerts = [];
+  Object.keys(LINES).forEach(l => {
+    const st = S.lineStatus[l], n = presentOf(l).length, Ln = L(l);
+    if (st === 'cancelled') alerts.push(`<div class="alert a-warn">${ic('warn', 16)}<div class="body"><b>${Ln.name} sotto soglia per domani</b><span>${n} bambini presenti, minimo ${Ln.threshold}. Annullata alle 18:00; si riattiva da sola se entro le 21:00 si arriva a ${Ln.threshold}.</span></div></div>`);
+    if (st === 'reactivated') alerts.push(`<div class="alert a-ok">${ic('check', 16)}<div class="body"><b>${Ln.name} riattivata</b><span>${n} bambini presenti: soglia raggiunta con una modifica tardiva.</span></div></div>`);
+    if (st === 'cancelled_final') alerts.push(`<div class="alert a-danger">${ic('warn', 16)}<div class="body"><b>${Ln.name} annullata per domani</b><span>Soglia non raggiunta entro le 21:00. Famiglie e volontari avvisati.</span></div></div>`);
+    if (st === 'cancelled_vol') alerts.push(`<div class="alert a-danger">${ic('warn', 16)}<div class="body"><b>${Ln.name} annullata: volontari insufficienti</b><span>${shiftCount(l)} su ${Ln.minVol} un'ora prima della partenza. Famiglie avvisate via push e SMS.</span></div></div>`);
+    if (S.esc[l] && S.esc[l].step === 'backup') alerts.push(`<div class="alert a-warn">${ic('users', 16)}<div class="body"><b>${Ln.name}: turno scoperto (${shiftCount(l)} su ${Ln.minVol})</b><span>${S.esc[l].missing.join(' e ')} non ${S.esc[l].missing.length > 1 ? 'vengono' : 'viene'}. Backup avvisati alle ${S.esc[l].since.slice(4)}; se nessuno risponde, tocca a te chiamare qualcuno.</span></div></div>`);
+    if (S.esc[l] && S.esc[l].step === 'covered') alerts.push(`<div class="alert a-ok">${ic('check', 16)}<div class="body"><b>${Ln.name}: turno coperto</b><span>Anna Ferrari ha preso il posto. ${shiftCount(l)} su ${Ln.minVol}, kit presente.</span></div></div>`);
+  });
+  if (!alerts.length) alerts.push(`<div class="alert a-ok">${ic('check', 16)}<div class="body"><b>Tutto regolare</b><span>Nessuna linea sotto soglia, nessun turno scoperto.</span></div></div>`);
+  return `<div class="stack">
+    <div class="head"><div><h1>Amministrazione</h1><p class="sub">Scuola primaria · Vedano al Lambro</p></div><span class="badge b-muted">${ic('shield', 12)} 2FA attiva</span></div>
+    ${alerts.join('')}
+    <div class="kpi">
+      <a href="#iscrizioni" data-act="tab" data-a="iscrizioni" class="card" style="text-decoration:none"><h2>Iscrizioni in attesa</h2><span class="big">${pending}</span><span class="meta">${pending ? 'da approvare' : 'tutto approvato'}</span></a>
+      <div class="card"><h2>Bambini domani</h2><span class="big">${presentOf('verde').length + presentOf('blu').length}</span><span class="meta">Verde ${presentOf('verde').length} · Blu ${presentOf('blu').length}</span></div>
+    </div>
+    <div class="stack-s"><h2>Turni di domani</h2><div class="kpi">${Object.keys(LINES).map(l => `<div class="card"><div class="hstack">${lineDot(l)}<b>${L(l).name}</b></div><span class="big">${shiftCount(l)} <span class="meta" style="font-size:13px;font-weight:500">/ ${L(l).minVol} min</span></span><span class="meta" style="color:${shiftHasKit(l) ? 'var(--ok-fg)' : 'var(--accent-fg)'}">${shiftHasKit(l) ? 'kit presente' : 'nessun kit'} · ${shiftNames(l) || 'nessuno'}</span>${statusBadge(l)}</div>`).join('')}</div></div>
+  </div>`;
+}
+function iscrizioniView(){
+  const pend = S.regs.filter(r => r.status === 'pending'), done = S.regs.filter(r => r.status !== 'pending');
+  const row = r => `<div class="row"><div class="grow"><div class="title" style="font-size:15px">${r.name} ${r.kind === 'volontario' ? '<span class="badge b-muted">volontario</span>' : ''}</div><div class="meta">${r.detail} · ${r.when}</div></div>
+    ${r.status === 'pending' ? `<button class="btn btn-outline iconbtn" style="color:var(--danger)" aria-label="Rifiuta ${r.name}" data-act="reject" data-a="${r.id}">${ic('x', 18, 2.5)}</button><button class="btn iconbtn" style="background:var(--ok);color:var(--ok-soft);border-color:var(--ok)" aria-label="Approva ${r.name}" data-act="approve" data-a="${r.id}">${ic('check', 18)}</button>` : `<span class="badge ${r.status === 'approved' ? 'b-ok' : 'b-danger'}">${r.status === 'approved' ? 'approvata' : 'rifiutata'}</span>`}</div>`;
+  return `<div class="stack">
+    <div class="head"><div><h1>Iscrizioni</h1><p class="sub">Anno scolastico 2026/27</p></div><span class="badge b-accent">${pend.length} in attesa</span></div>
+    <p class="small">Ogni iscrizione resta registrata con stato, data, chi l'ha approvata e la versione dell'informativa accettata. Per i volontari si verifica prima l'iscrizione all'albo civico.</p>
+    ${pend.length ? `<div class="rows">${pend.map(row).join('')}</div>` : `<div class="card"><p class="small">Nessuna iscrizione in attesa.</p></div>`}
+    ${done.length ? `<div class="stack-s"><h2>Gestite oggi</h2><div class="rows">${done.map(row).join('')}</div></div>` : ''}
+    <div class="stack-s"><h2>Riepilogo</h2><div class="kpi"><div class="card"><h2>Bambini iscritti</h2><span class="big">${S.kids.length}</span><span class="meta">Verde ${kidsOf('verde').length} · Blu ${kidsOf('blu').length}</span></div><div class="card"><h2>Volontari</h2><span class="big">30</span><span class="meta">${S.vols.filter(v => v.kit).length + 14} con kit</span></div></div></div>
+    <button class="btn btn-dashed btn-block">${ic('plus', 16)} Inserisci a mano chi non usa l'app</button>
+  </div>`;
+}
+function lineeView(){
+  return `<div class="stack">
+    <div class="head"><div><h1>Linee</h1><p class="sub">Scuola primaria · Vedano al Lambro</p></div><button class="btn btn-sm btn-outline">${ic('plus', 14, 2.5)} Nuova linea</button></div>
+    ${Object.keys(LINES).map(l => { const Ln = L(l), open = S.lineOpen === l, st = Ln.stops; return `<div class="rows">
+      <button class="row row-btn" data-act="lineopen" data-a="${l}" style="background:var(--muted-bg)">${lineDot(l)}<span class="grow"><span class="title" style="display:block">${Ln.name}</span><span class="meta">${st.length - 1} fermate · ${kidsOf(l).length} bambini · ${Ln.start} → 8:00</span></span>${statusBadge(l)}<span style="transform:rotate(${open ? 90 : 0}deg);display:inline-flex">${ic('chev', 18)}</span></button>
+      ${open ? `${st.map((s, i) => `<div class="stoprow"><span class="stopn ${i === st.length - 1 ? 'end' : ''}">${i === st.length - 1 ? ic('flag', 12, 3) : i + 1}</span><span class="grow" style="font-size:14px;font-weight:${s.note ? 600 : 500}">${s.name}${s.note ? ` <span class="meta" style="font-weight:500">· ${s.note}</span>` : ''}</span><span class="meta mono">${s.time}</span><span class="badge b-muted">${kidsOf(l).filter(k => k.stop === i).length || ''}</span></div>`).join('')}
+      <button class="btn btn-dashed" style="border-radius:0;border-left:0;border-right:0;border-bottom:0;min-height:44px">${ic('plus', 14, 2.5)} Aggiungi una fermata</button>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--border)">
+        <div style="padding:10px 12px;border-right:1px solid var(--border)"><h2 style="font-size:11px">Volontari min.</h2><b style="font-size:16px">${Ln.minVol}</b> <span class="meta">(cons. 3)</span></div>
+        <div style="padding:10px 12px;border-right:1px solid var(--border)"><h2 style="font-size:11px">Soglia bimbi</h2><b style="font-size:16px">${Ln.threshold}</b></div>
+        <div style="padding:10px 12px"><h2 style="font-size:11px">Chiusura</h2><b style="font-size:16px">18:00</b> <span class="meta">/ 21:00</span></div>
+      </div>` : ''}
+    </div>`; }).join('')}
+    <p class="small">Soglie, orari e numero minimo di volontari sono per linea. Nei giorni del calendario (vacanze, scioperi) non si generano né turni né appelli.</p>
+  </div>`;
+}
+function turniAdminView(){
+  return `<div class="stack">
+    <div><h1>Turni</h1><p class="sub">Domani, martedì 27 ottobre</p></div>
+    ${Object.keys(LINES).map(l => { const s = S.shifts[l], Ln = L(l); return `<div class="card">
+      <div class="between"><div class="hstack">${lineDot(l)}<b>${Ln.name} · ${Ln.start}</b></div>${statusBadge(l)}</div>
+      <div class="stack-s">${s.vols.map(v => S.V[v]).map(v => `<div class="hstack"><span class="av av-s">${initials(v.name)}</span><span class="grow" style="${v.out ? 'text-decoration:line-through;color:var(--muted)' : ''}">${v.name}</span>${v.kit && !v.out ? `<span class="badge b-ok">${ic('kit', 12)} kit</span>` : ''}${v.out ? '<span class="badge b-danger">non viene</span>' : ''}</div>`).join('')}
+      ${s.backups.map(v => S.V[v]).map(v => `<div class="hstack"><span class="av av-s">${initials(v.name)}</span><span class="grow meta">${v.name} · backup</span>${v.covering ? '<span class="badge b-accent">copre il turno</span>' : ''}</div>`).join('')}</div>
+      <div class="small">${shiftCount(l)} su ${Ln.minVol} · ${shiftHasKit(l) ? 'kit presente' : '<span style="color:var(--accent-fg)">nessun kit: la sostituzione lo segnala</span>'}</div>
+    </div>`; }).join('')}
+    <div class="stack-s"><h2>Novembre</h2>
+      ${S.bozzaStale ? `<div class="alert a-warn">${ic('warn', 16)}<div class="body"><b>Disponibilità cambiate dopo la bozza</b><span>Marta Rossi · ${excList(S.V.marta, 'admin') || 'eccezione tolta'}. La bozza ${S.bozza === 'sent' ? 'già inviata' : 'attuale'} non ne tiene conto.</span><button class="btn btn-sm btn-outline" style="align-self:flex-start;margin-top:6px;border-color:var(--accent-line);color:inherit" data-act="regen">${ic('reset', 14)} Rigenera la bozza</button></div></div>` : ''}
+      ${!S.bozza ? `<div class="card"><p class="small">30 volontari, 21 giorni di scuola, 2 linee. L'algoritmo a vincoli genera la bozza da disponibilità settimanali, eccezioni per data, backup e kit: almeno ${L('verde').minVol} volontari e un kit per turno, carichi bilanciati.</p><button class="btn btn-primary btn-block" data-act="bozza">Genera la bozza di novembre</button></div>`
+      : `<div class="card"><div class="between"><b>Bozza di novembre</b><span class="badge ${S.bozza === 'sent' ? 'b-ok' : 'b-accent'}">${S.bozza === 'sent' ? 'inviata' : 'da rivedere'}</span></div>
+        <div class="kpi"><div class="card" style="padding:10px"><h2>Turni</h2><span class="big">42</span><span class="meta">21 giorni × 2 linee</span></div><div class="card" style="padding:10px"><h2>A testa</h2><span class="big">1,3</span><span class="meta">turni a settimana</span></div></div>
+        <div class="small">Kit in ogni turno · 3 volontari dove possibile (29 turni su 42) · nessuno più di 2 volte a settimana · ${(n => n ? `${n} ${n > 1 ? 'eccezioni per data' : 'eccezione per data'}` : 'nessuna eccezione per data')(S.bozzaExc || 0)}.</div>
+        ${S.bozza === 'sent' ? '<p class="small">Inviata ai volontari: chi non risponde entro il 31 ottobre conferma per silenzio-assenso. Pubblicazione il 1° novembre.</p>' : `<div class="seg"><button class="btn btn-outline" style="min-height:48px">Rivedi</button><button class="btn btn-primary" style="min-height:48px" data-act="sendbozza">Invia per conferma</button></div>`}
+      </div>`}
+    </div>
+  </div>`;
+}
+
+/* ---------- regia ---------- */
+const whereOf = p => `${WHERE[p.scene[0]]} › ${TABL[p.scene[1]]}`;
+function regiaInner(){
+  const last = S.phase >= PHASES.length - 1, nx = PHASES[S.phase + 1];
+  return `<div class="between"><div><b style="font-size:16px">Regia della demo</b><div class="hint">Un martedì a Vedano, passo per passo. Ogni passo apre la schermata in cui succede.</div></div><div class="hstack" style="flex-shrink:0"><button class="btn btn-sm btn-outline" data-act="mode" data-a="mappa" title="Tutte le schermate per ruolo e flusso">${ic('grid', 14)} Schermate</button><button class="btn btn-sm btn-outline" data-act="reset" aria-label="Ricomincia">${ic('reset', 14)}</button></div></div>
+  <div class="steps">${PHASES.map((p, i) => `<button class="step ${i < S.phase ? 'done' : i === S.phase ? 'cur' : ''}" data-act="step" data-a="${i}" aria-current="${i === S.phase ? 'step' : 'false'}"><span class="n">${i < S.phase ? ic('check', 12, 3) : i + 1}</span><span class="grow"><span class="t mono">${p.t}</span><br><span class="st">${p.title}</span><br><span class="sd">${p.desc}</span><br><span class="where">${ic('chev', 10, 3)} ${whereOf(p)}</span></span></button>`).join('')}</div>
+  <button class="btn btn-primary btn-block" data-act="next" ${last ? 'disabled' : ''}>${ic('play', 16)} ${last ? 'Storia finita' : `Avanti: ${nx.t} · ${nx.title}`}</button>
+  <div class="hint">Puoi anche agire tu: Giulia cambia una presenza, Marta preme "Non posso venire" o fa l'appello, l'amministratore approva le iscrizioni. Tornando a un passo precedente la demo riparte da capo fino a quel punto.</div>`;
+}
+function stripView(){
+  const p = PHASES[S.phase];
+  return `<button class="strip" data-act="sheet" aria-label="Apri la regia della demo">${ic('play', 12)}<span class="grow">Passo ${S.phase + 1} di ${PHASES.length} · <span class="mono">${p.t}</span> · ${p.title}</span><span class="badge b-accent">regia</span></button>`;
+}
+
+/* ---------- mappa delle schermate ---------- */
+/* Ogni istantanea è uno stato reale della demo: si parte da initState, si rigioca la storia fino a `phase`,
+   si apre persona/tab e si applicano eventuali azioni (make). Niente markup disegnato a mano. */
+const ROLES = [
+  { id:'accesso', name:'Prima di entrare', who:'tutti i ruoli', av:'OC', desc:'Prima di entrare: passkey o codice via SMS, e l\'iscrizione dei bambini che l\'amministratore approva.' },
+  { id:'genitore', name:'Genitore', who:'Giulia Bianchi', av:'GB', desc:'Luca sulla Verde, Sofia sulla Blu. Tre tab: Presenze, Avvisi, Profilo. Segnala solo le assenze; il resto arriva da solo.' },
+  { id:'volontaria', name:'Volontaria', who:'Marta Rossi', av:'MR', desc:'Quattro tab: Turni, Appello, Avvisi, Profilo. Turno sulla Verde il martedì, riserva il mercoledì.' },
+  { id:'admin', name:'Amministratore', who:'Officina Civica', av:'OC', desc:'Cinque tab: Oggi, Iscrizioni, Linee, Turni, Avvisi. Vede tutto, interviene solo quando l\'automatismo non basta.' }
+];
+const FLOWDESC = {
+  'Accesso e iscrizione':'Senza password: lo sblocco del telefono o un codice. L\'iscrizione non vale finché l\'amministratore non la approva.',
+  'Presenze e soglie':'Presenti salvo avviso: si segnalano solo le assenze, entro le 18:00. La soglia per linea decide se il pedibus parte.',
+  'Avvisi':'Notifiche push sul telefono, qui in archivio; quelle urgenti arrivano anche via SMS.',
+  'Profilo':'Bambini iscritti, backup presenze, contatti d\'emergenza, informativa e pettorine.',
+  'Turni e sostituzioni':'Il prossimo turno con team e kit, chi è di riserva. «Non posso venire» fa partire l\'escalation da sola.',
+  'Appello':'Fermata per fermata: spunte grandi, si aggiunge solo un bambino iscritto, la consegna a scuola avvisa i genitori.',
+  'Avvisi e profilo':'Gli avvisi del turno; disponibilità settimanale con le eccezioni per data, dotazioni e requisiti.',
+  'Oggi':'Il quadro della giornata: soglie, turni, kit ed escalation in corso. Normalmente dice «tutto regolare».',
+  'Iscrizioni':'Approva o rifiuta; ogni decisione resta registrata con la versione dell\'informativa accettata.',
+  'Linee':'Fermate e orari, bambini per fermata, soglia e minimo volontari per linea.',
+  'Turni e bozza mensile':'I turni di domani per linea, e la bozza del mese generata dall\'algoritmo a vincoli e inviata per silenzio-assenso. Se una disponibilità cambia dopo la bozza, l\'amministratore lo vede qui.'
+};
+function checkStop(i, skip){ presentOf('verde').filter(k => k.stop === i && k.id !== skip).forEach(k => S.appello.checked[k.id] = true); }
+const SHOTS = [
+  { role:'accesso', flow:'Accesso e iscrizione', title:'Accesso', note:'Passkey con lo sblocco del telefono; in alternativa codice via SMS o link via email. Per l\'amministratore anche un secondo fattore.', login:false, make(){ S.screen = 'accesso'; } },
+  { role:'accesso', flow:'Accesso e iscrizione', title:'Iscrizione', note:'Genitore principale, uno o più bambini, fermata scelta a parte da scuola e classe, consenso all\'informativa versionata.', login:false, make(){ S.screen = 'iscrizione'; } },
+  { role:'accesso', flow:'Accesso e iscrizione', title:'Iscrizione inviata', note:'Il bambino non risulta iscritto finché l\'amministratore non approva.', login:false, make(){ S.screen = 'iscrizione_ok'; S.regDone = 'Francesca'; } },
+
+  { role:'genitore', flow:'Presenze e soglie', title:'Presenze · lunedì 17:30', note:'Prima della chiusura. Sofia è assente per il dentista; la Blu è a 3 su 4 e si decide alle 18:00.', phase:0, persona:'genitore', tab:'presenze' },
+  { role:'genitore', flow:'Presenze e soglie', title:'Presenze · lunedì 18:00', note:'Assenze chiuse. La Blu è annullata: sotto soglia, riattivabile fino alle 21:00.', phase:1, persona:'genitore', tab:'presenze' },
+  { role:'genitore', flow:'Presenze e soglie', title:'Presenze · lunedì 20:40', note:'Giulia annulla l\'assenza di Sofia: modifica tardiva, la Blu arriva a 4 e si riattiva da sola.', phase:2, persona:'genitore', tab:'presenze' },
+  { role:'genitore', flow:'Presenze e soglie', title:'Presenze · martedì 8:00', note:'Entrambe le linee hanno consegnato a scuola.', phase:7, persona:'genitore', tab:'presenze' },
+  { role:'genitore', flow:'Avvisi', title:'Avvisi · lunedì sera', note:'Annullata alle 18:00, riattivata alle 20:40: gli avvisi urgenti arrivano anche via SMS.', phase:2, persona:'genitore', tab:'avvisi' },
+  { role:'genitore', flow:'Avvisi', title:'Avvisi · martedì 8:00', note:'Consegna confermata dai volontari: Sofia alle 8:01, Luca alle 8:02.', phase:7, persona:'genitore', tab:'avvisi' },
+  { role:'genitore', flow:'Profilo', title:'Profilo', note:'Bambini iscritti, nonna Rita come backup presenze, contatti d\'emergenza, informativa e pettorine.', phase:0, persona:'genitore', tab:'profilo' },
+
+  { role:'volontaria', flow:'Turni e sostituzioni', title:'Turni · tutto regolare', note:'Prossimo turno con team e kit, la settimana, l\'avviso sulla bozza di novembre.', phase:3, persona:'volontaria', tab:'turni' },
+  { role:'volontaria', flow:'Turni e sostituzioni', title:'Chi è di backup', note:'La riserva del giorno e se ha il kit.', phase:3, persona:'volontaria', tab:'turni', make(){ S.showBackup = true; } },
+  { role:'volontaria', flow:'Turni e sostituzioni', title:'«Non posso venire»', note:'È Marta a mancare: un tocco e l\'escalation parte da sola. Il bottone diventa «Hai avvisato».', phase:3, persona:'volontaria', tab:'turni', make(){ ACT.noshow(); } },
+  { role:'volontaria', flow:'Turni e sostituzioni', title:'Turno scoperto · 6:50', note:'Paolo non viene: 1 su 2. Backup avvisati; dopo 10 minuti tutti i volontari, poi il gestore turni.', phase:4, persona:'volontaria', tab:'turni' },
+  { role:'volontaria', flow:'Turni e sostituzioni', title:'Turno coperto · 7:00', note:'Anna prende il posto: 2 su 2, kit presente.', phase:5, persona:'volontaria', tab:'turni' },
+  { role:'volontaria', flow:'Appello', title:'Appello · prima della partenza', note:'Fermate, orari e bambini attesi a ciascuna fermata.', phase:3, persona:'volontaria', tab:'appello' },
+  { role:'volontaria', flow:'Appello', title:'Appello · capolinea 7:30', note:'Una spunta grande per bambino. In basso chi è a bordo, con chi, e se c\'è il kit.', phase:6, persona:'volontaria', tab:'appello', make(){ ACT.apcheck('emma'); } },
+  { role:'volontaria', flow:'Appello', title:'Appello · bambino non in lista', note:'Si aggiunge solo un bambino iscritto (qui uno segnato assente). Un non iscritto non si prende.', phase:6, persona:'volontaria', tab:'appello', make(){ checkStop(0); ACT.apnext(); checkStop(1); ACT.apnext(); ACT.apadd(); } },
+  { role:'volontaria', flow:'Appello', title:'Appello · arrivo a scuola', note:'Tutti a bordo: la lista e il bottone «Consegnati a scuola».', phase:6, persona:'volontaria', tab:'appello', make(){ for (let i = 0; i < 5; i++){ checkStop(i); ACT.apnext(); } } },
+  { role:'volontaria', flow:'Appello', title:'Appello · consegnati', note:'Chiusura del turno. Un bambino atteso ma non trovato alla fermata resta segnalato; il genitore è già stato avvisato.', phase:6, persona:'volontaria', tab:'appello', make(){ for (let i = 0; i < 5; i++){ checkStop(i, 'giacomo'); ACT.apnext(); } ACT.apdeliver(); } },
+  { role:'volontaria', flow:'Appello', title:'Appello · linea annullata', note:'Se un\'ora prima della partenza i volontari sono sotto il minimo, l\'appello non si apre e le famiglie sono avvisate.', phase:4, persona:'volontaria', tab:'appello', make(){ S.V.marta.out = true; stepTo(6); S.persona = 'volontaria'; S.tab = 'appello'; } },
+  { role:'volontaria', flow:'Avvisi e profilo', title:'Avvisi · martedì mattina', note:'Paolo non viene, Anna copre, si parte: ogni passaggio dell\'escalation resta in archivio.', phase:6, persona:'volontaria', tab:'avvisi' },
+  { role:'volontaria', flow:'Avvisi e profilo', title:'Profilo e disponibilità', note:'Settimana tipo (nei giorni senza turno si è riserva), calendario di novembre per le eccezioni, kit e pettorina, albo civico e assicurazione.', phase:0, persona:'volontaria', tab:'profilo' },
+  { role:'volontaria', flow:'Avvisi e profilo', title:'Eccezioni di novembre', note:'Un giorno diverso dal solito: il 10 (martedì) Marta non c\'è, il 12 (giovedì) c\'è in più. Entro il 27, la bozza del 28 ne tiene conto.', phase:0, persona:'volontaria', tab:'profilo', make(){ ACT.exc(10); ACT.exc(12); } },
+
+  { role:'admin', flow:'Oggi', title:'Oggi · tutto regolare', note:'Nessuna linea sotto soglia, nessun turno scoperto. Iscrizioni in attesa, presenti e turni di domani con kit.', phase:0, persona:'admin', tab:'oggi' },
+  { role:'admin', flow:'Oggi', title:'Oggi · Blu sotto soglia', note:'Alle 18:00 la Blu ha 3 presenti su 4: annullata, si riattiva da sola fino alle 21:00.', phase:1, persona:'admin', tab:'oggi' },
+  { role:'admin', flow:'Oggi', title:'Oggi · turno scoperto', note:'Paolo manca sulla Verde: backup avvisati; se nessuno risponde, tocca all\'amministratore.', phase:4, persona:'admin', tab:'oggi' },
+  { role:'admin', flow:'Oggi', title:'Oggi · annullata per volontari', note:'Marta e Paolo mancano, Anna da sola non basta: Verde annullata alle 6:30, famiglie avvisate via push e SMS.', phase:4, persona:'admin', tab:'oggi', make(){ S.V.marta.out = true; stepTo(6); S.persona = 'admin'; S.tab = 'oggi'; } },
+  { role:'admin', flow:'Iscrizioni', title:'Iscrizioni · in attesa', note:'Genitori e volontari da approvare; per i volontari prima la verifica nell\'albo civico.', phase:0, persona:'admin', tab:'iscrizioni' },
+  { role:'admin', flow:'Iscrizioni', title:'Iscrizioni · gestite', note:'Approvata e rifiutata restano registrate con chi ha deciso e quando.', phase:0, persona:'admin', tab:'iscrizioni', make(){ ACT.approve('r1'); ACT.reject('r3'); } },
+  { role:'admin', flow:'Linee', title:'Linee', note:'Fermate con orari e bambini per fermata; minimo volontari, soglia e orari di chiusura per linea.', phase:0, persona:'admin', tab:'linee' },
+  { role:'admin', flow:'Turni e bozza mensile', title:'Turni · domani', note:'Team per linea, backup e kit. Da qui si genera la bozza di novembre.', phase:3, persona:'admin', tab:'turni' },
+  { role:'admin', flow:'Turni e bozza mensile', title:'Turni · bozza da rivedere', note:'40 turni, 1,3 a testa a settimana, kit in ogni turno. Rivedi o invia per conferma.', phase:3, persona:'admin', tab:'turni', make(){ ACT.bozza(); } },
+  { role:'admin', flow:'Turni e bozza mensile', title:'Turni · bozza inviata', note:'Silenzio-assenso entro il 31 ottobre, pubblicazione il 1° novembre.', phase:3, persona:'admin', tab:'turni', make(){ ACT.bozza(); ACT.sendbozza(); } },
+  { role:'admin', flow:'Turni e bozza mensile', title:'Turni · disponibilità cambiate dopo la bozza', note:'Marta segna un\'eccezione a bozza già inviata: l\'amministratore lo vede qui e negli avvisi, e può rigenerare la bozza.', phase:3, persona:'admin', tab:'turni', make(){ ACT.bozza(); ACT.sendbozza(); ACT.exc(10); } },
+  { role:'admin', flow:'Avvisi', title:'Avvisi · la giornata intera', note:'Tutto ciò che è successo dal lunedì sera alla consegna: il registro dell\'amministratore.', phase:7, persona:'admin', tab:'avvisi' }
+];
+const GAL = { filter:'all' };
+function snapshot(sh){
+  const saved = S; QUIET = true;
+  S = initState();
+  while (S.phase < (sh.phase || 0)){ S.phase++; onEnter(S.phase); }
+  const persona = sh.persona || 'genitore';
+  Object.assign(S, { loggedIn: sh.login !== false, persona, tab: sh.tab || HOME[persona], sheet:false, toast:null });
+  if (sh.make) sh.make();
+  const html = frameInner().html;
+  S = saved; QUIET = false;
+  return html;
+}
+function roleSection(r){
+  const shots = SHOTS.filter(s => s.role === r.id), flows = [...new Set(shots.map(s => s.flow))];
+  return `<section class="role" id="role-${r.id}">
+    <div class="rolehead"><span class="av av-accent" style="width:48px;height:48px;font-size:16px">${r.av}</span><div class="grow"><h2 class="roletitle">${r.name} <span class="meta" style="font-weight:500">· ${r.who}</span></h2><p class="small">${r.desc}</p></div><span class="badge b-muted">${shots.length} schermate</span></div>
+    ${flows.map(f => `<div class="flow"><div class="flowhead"><h3>${f}</h3><p class="small">${FLOWDESC[f] || ''}</p></div>
+      <div class="shots">${shots.filter(s => s.flow === f).map(s => `<figure class="shot"><div class="frame mini" aria-hidden="true">${snapshot(s)}</div><figcaption><b>${s.title}</b><span class="small">${s.note}</span></figcaption></figure>`).join('')}</div></div>`).join('')}
+  </section>`;
+}
+function galleryView(){
+  const roles = ROLES.filter(r => GAL.filter === 'all' || r.id === GAL.filter);
+  return `<div class="gal">
+    <header class="galhead"><div><h1 style="font-size:26px">Pedibus Vedano · tutte le schermate</h1><p class="sub">${SHOTS.length} schermate del prototipo, per ruolo e per flusso. Ognuna è uno stato reale della demo: stessa app, stessi dati del martedì.</p></div><button class="btn btn-primary btn-sm" data-act="mode" data-a="demo">${ic('play', 14)} Torna alla demo</button></header>
+    <div class="pills galfilter" role="tablist" aria-label="Ruolo">${[['all', 'Tutte'], ...ROLES.map(r => [r.id, r.name])].map(([id, l]) => `<button class="pill ${GAL.filter === id ? 'on' : ''}" data-act="galfilter" data-a="${id}" role="tab" aria-selected="${GAL.filter === id}">${l}</button>`).join('')}</div>
+    ${roles.map(roleSection).join('')}
+  </div>`;
+}
+
+/* ---------- render ---------- */
+/* Markup di una schermata (barra ruoli + contenuto + nav) per lo stato corrente S. Usato dalla demo e dalla mappa. */
+function frameInner(){
+  let body = '', foot = '', key = '';
+  if (!S.loggedIn){
+    key = S.screen;
+    body = S.screen === 'iscrizione' ? iscrizioneView() : S.screen === 'iscrizione_ok' ? iscrizioneOkView() : accessoView();
+  } else {
+    key = S.persona + ':' + S.tab;
+    const aud = audOf[S.persona];
+    if (S.tab === 'avvisi') S.seen[aud] = S.inbox[aud].length;
+    let inner = '';
+    if (S.persona === 'genitore'){
+      inner = S.tab === 'presenze' ? presenzeView() : S.tab === 'avvisi' ? inboxView('parent', 'Avvisi') : profiloGenitoreView();
+      foot = `<nav class="nav" style="grid-template-columns:repeat(3,minmax(0,1fr))" aria-label="Sezioni">${navItem('presenze', 'Presenze', 'check')}${navItem('avvisi', 'Avvisi', 'bell', unread('parent'))}${navItem('profilo', 'Profilo', 'user')}</nav>`;
+    } else if (S.persona === 'volontaria'){
+      inner = S.tab === 'turni' ? turniView() : S.tab === 'appello' ? appelloView() : S.tab === 'avvisi' ? inboxView('vol', 'Avvisi') : profiloVolView();
+      foot = (S.tab === 'appello' ? appelloFoot() : '') + `<nav class="nav" style="grid-template-columns:repeat(4,minmax(0,1fr))" aria-label="Sezioni">${navItem('turni', 'Turni', 'cal')}${navItem('appello', 'Appello', 'check', S.appello.open && !S.appello.delivered ? '•' : 0)}${navItem('avvisi', 'Avvisi', 'bell', unread('vol'))}${navItem('profilo', 'Profilo', 'user')}</nav>`;
+    } else {
+      inner = S.tab === 'oggi' ? oggiView() : S.tab === 'iscrizioni' ? iscrizioniView() : S.tab === 'linee' ? lineeView() : S.tab === 'turni' ? turniAdminView() : inboxView('admin', 'Avvisi');
+      const pend = S.regs.filter(r => r.status === 'pending').length;
+      foot = `<nav class="nav" style="grid-template-columns:repeat(5,minmax(0,1fr))" aria-label="Sezioni">${navItem('oggi', 'Oggi', 'check')}${navItem('iscrizioni', 'Iscrizioni', 'users', pend)}${navItem('linee', 'Linee', 'pin')}${navItem('turni', 'Turni', 'cal')}${navItem('avvisi', 'Avvisi', 'bell', unread('admin'))}</nav>`;
+    }
+    body = topbar() + `<div class="screen">${inner}</div>`;
+  }
+  return { key, html: body + foot };
+}
+function render(){
+  const app = document.getElementById('app');
+  app.dataset.mode = MODE;
+  if (MODE === 'mappa'){ app.dataset.key = 'mappa'; app.innerHTML = galleryView(); return; }
+  const prev = app.querySelector('.screen'); const scroll = prev ? prev.scrollTop : 0; const prevKey = app.dataset.key;
+  const f = frameInner();
+  app.dataset.key = f.key;
+  app.innerHTML = `<div class="stage">
+    <div class="frame">${stripView()}${f.html}${S.toast ? `<div class="toast" role="status">${S.toast}</div>` : ''}</div>
+    <aside class="regia"><div class="rcard">${regiaInner()}</div></aside>
+  </div>
+  ${S.sheet ? `<div class="sheet"><div class="backdrop" data-act="sheet"></div><div class="panel">${regiaInner()}<button class="btn btn-outline btn-block" data-act="sheet">Chiudi</button></div></div>` : ''}`;
+  const cur = app.querySelector('.screen'); if (cur && prevKey === f.key) cur.scrollTop = scroll;
+}
+render();
+</script>
+
+</body></html>
