@@ -156,7 +156,9 @@ export default async function ProfiloPage() {
         </Card>
       </div>
 
-      <Button variant="outline" className="w-full border-dashed" render={<Link href="/iscrizione" />}>Iscrivi un altro bambino</Button>
+      {s.ruoli.some((r) => r.ruolo === "genitore") && (
+        <Button variant="outline" className="w-full border-dashed" render={<Link href="/iscrizione" />}>{(bambini ?? []).length ? "Iscrivi un altro bambino" : "Iscrivi i tuoi bambini"}</Button>
+      )}
       <form action={esci}>
         <Button variant="outline" type="submit" className="w-full"><LogOut size={18} /> Esci</Button>
       </form>
