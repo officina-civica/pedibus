@@ -91,6 +91,16 @@ select verifica((select count(*) from contatti_emergenza) = 0, 'Rita non vede i 
 select verifica((select count(*) from avvisi) = 0, 'Rita non vede gli avvisi di Giulia');
 select verifica(segna_presenza(:luca, 'assente', '2026-10-27', '2026-10-26 17:40+01') = 'Assenza segnalata.', 'Rita può segnare Luca');
 select verifica(segna_presenza(:luca, 'presente', '2026-10-27', '2026-10-26 17:41+01') = 'Assenza annullata.', '…e annullare');
+select come(:giulia);
+select verifica(aggiungi_delega('+39 999 000 0000') like 'Nessuno con questo numero%', 'delega a un numero sconosciuto: messaggio chiaro');
+select verifica(aggiungi_delega('347 222 3344', 'zia Marta') = 'Backup aggiunto.', 'delega a Marta per telefono');
+select verifica((select count(*) from deleghe where genitore_id = :giulia) = 2, 'Giulia ha due deleghe');
+select come(:marta);
+select verifica(exists (select 1 from bambini where id = :sofia), 'Marta delegata vede anche Sofia (che è sulla Blu, non sulla sua linea)');
+reset role;
+delete from deleghe where genitore_id = :giulia and delegato_id = :marta;
+delete from avvisi where destinatario_id = :marta and titolo = 'Sei il backup per le presenze';
+set role authenticated;
 reset role;
 
 -- ---------------------------------------------------------------------------

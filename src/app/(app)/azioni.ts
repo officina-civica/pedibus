@@ -51,3 +51,19 @@ export async function rimuoviAbbonamentoPush(endpoint: string) {
   await supabase.from("push_abbonamenti").delete().eq("endpoint", endpoint);
   return { ok: true };
 }
+
+export async function aggiungiDelega(telefono: string, etichetta: string): Promise<{ ok: boolean; messaggio: string }> {
+  const supabase = await supabaseServer();
+  const { data, error } = await supabase.rpc("aggiungi_delega", { p_telefono: telefono, p_etichetta: etichetta || null });
+  if (error) return { ok: false, messaggio: error.message };
+  revalidatePath("/profilo");
+  return { ok: data === "Backup aggiunto.", messaggio: data ?? "Fatto." };
+}
+
+export async function rimuoviDelega(delegatoId: string) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from("deleghe").delete().eq("genitore_id", user.id).eq("delegato_id", delegatoId);
+  revalidatePath("/profilo");
+}

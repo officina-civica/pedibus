@@ -33,6 +33,7 @@ supabase/
     20261027000600_viste_app.sql      letture del genitore (stato delle linee, giorno di riferimento)
     20261027000700_letture_turni.sql  letture di volontario e admin (turno, appello, riepilogo)
     20261027000800_rls_deleghe.sql    il genitore vede il proprio delegato (trovato dal giro e2e)
+    20261027000900_deleghe_app.sql    aggiungi_delega(telefono): il backup del genitore dall'app
   functions/invia-avvisi/index.ts     la Edge Function che svuota la coda: Web Push + SMS (Twilio)
   seed.sql                            il "martedì a Vedano" del prototipo (solo sviluppo)
 prototipo/index.html                  il prototipo interattivo (demo con regia + mappa delle schermate)
@@ -150,8 +151,9 @@ Fatto, per tutti e tre i ruoli, con le schermate del prototipo:
   (approva/rifiuta iscrizioni e richieste da volontario, con motivo), Linee (fermate, bambini per fermata, soglie,
   chiusure; in sola lettura), Turni (team del giorno, bozza del mese: genera, invia, pubblica, rigenera se "da rivedere").
 
-Non ancora: modifica di linee e fermate dall'app, inserimento manuale di chi non usa l'app, gestione dei backup del
-genitore (deleghe) dall'app, calendario delle chiusure modificabile.
+Il backup del genitore si aggiunge dal Profilo per numero di telefono (deve essere entrato nell'app una volta).
+Non ancora: modifica di linee e fermate dall'app, inserimento manuale di chi non usa l'app, calendario delle
+chiusure modificabile.
 
 Scelte da sapere: le pagine sono tutte dinamiche (`cacheComponents` spento: dati per utente ovunque); i dati
 passano da Supabase con la RLS dell'utente, le regole dalle RPC; la lettura dei conteggi di linea è una funzione
@@ -218,5 +220,5 @@ compare in `cron.job`).
    deploy della funzione e `impostazioni` compilate: vedi sopra.
 2. Primo giro contro il progetto Supabase vero (chiave anon in `.env.local`, migrazioni spinte, Twilio): in locale
    l'app è verificata da browser contro schema e RLS veri (vedi sopra), ma non ancora con GoTrue, SMS e push reali.
-   Poi: modifica linee/fermate e chiusure dall'app, deleghe dall'app, inserimento manuale. Dominio definitivo prima delle passkey.
+   Poi: modifica linee/fermate e chiusure dall'app, inserimento manuale. Dominio definitivo prima delle passkey.
 3. L'algoritmo a vincoli vero per la bozza mensile, con il confronto "cosa cambia" alla rigenerazione.

@@ -140,6 +140,7 @@ export type Database = {
       genera_bozza: { Args: { p_scuola: string; p_mese: string }; Returns: string };
       invia_bozza: { Args: { p_bozza: string }; Returns: undefined };
       pubblica_bozza: { Args: { p_bozza: string }; Returns: undefined };
+      aggiungi_delega: { Args: { p_telefono: string; p_etichetta?: string | null }; Returns: string };
       iscrivi_bambino: { Args: { p_scuola: string; p_nome: string; p_cognome: string; p_classe: string; p_genere: string | null; p_linea: string; p_fermata: string; p_informativa: string; p_contatti?: unknown }; Returns: string };
     };
     Enums: {

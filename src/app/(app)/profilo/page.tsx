@@ -11,6 +11,7 @@ import { esci } from "@/app/(app)/azioni";
 import { Notifiche } from "./notifiche";
 import { Passkey } from "./passkey";
 import { Disponibilita } from "./disponibilita";
+import { Backup } from "./backup";
 import { BriefcaseMedical } from "lucide-react";
 import { oggiRome } from "@/lib/date";
 
@@ -117,21 +118,7 @@ export default async function ProfiloPage() {
       {s.ruoli.some((r) => r.ruolo === "genitore") && (
         <div className="flex flex-col gap-2">
           <H2>Backup presenze</H2>
-          {delegati && delegati.length > 0 ? (
-            <Card>
-              {delegati.map((d) => (
-                <div key={d.id} className="flex items-center gap-3">
-                  <Avatar>{iniziali(`${d.nome} ${d.cognome}`)}</Avatar>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-base font-semibold">{d.nome} {d.cognome}{deleghe?.find((x) => x.delegato_id === d.id)?.etichetta ? ` (${deleghe.find((x) => x.delegato_id === d.id)!.etichetta})` : ""}</div>
-                    <div className="text-[13px] text-muted">{d.telefono ?? ""}{d.telefono ? " · " : ""}può solo segnare presenze e assenze</div>
-                  </div>
-                </div>
-              ))}
-            </Card>
-          ) : (
-            <Card><p className="text-[13px] text-muted">Nessun backup indicato. Un backup (l&apos;altro genitore, un nonno) può segnare presenze e assenze al posto tuo, nient&apos;altro. Si aggiunge dall&apos;amministratore, per ora.</p></Card>
-          )}
+          <Backup delegati={(delegati ?? []).map((d) => ({ id: d.id, nome: `${d.nome} ${d.cognome}`, telefono: d.telefono, etichetta: deleghe?.find((x) => x.delegato_id === d.id)?.etichetta ?? null }))} />
         </div>
       )}
 
