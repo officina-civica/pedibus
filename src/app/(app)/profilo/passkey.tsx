@@ -26,7 +26,6 @@ export function Passkey() {
   useEffect(() => {
     const t = setTimeout(() => { setSupportata("PublicKeyCredential" in window); carica(); }, 0);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const registra = () => start(async () => {
