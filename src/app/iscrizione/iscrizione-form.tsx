@@ -19,7 +19,6 @@ const CLASSI = ["1ª A", "1ª B", "1ª C", "2ª A", "2ª B", "2ª C", "3ª A", "
 
 export function IscrizioneForm({ persona, scuole, linee, fermate, informativa }: { persona: { nome: string; cognome: string; telefono: string | null } | null; scuole: Scuola[]; linee: Linea[]; fermate: Fermata[]; informativa: Informativa | null }) {
   const router = useRouter();
-  const supabase = supabaseBrowser();
   const [pending, start] = useTransition();
   const [scuola, setScuola] = useState(scuole[0]?.id ?? "");
   const [cognome, setCognome] = useState(persona?.cognome ?? "");
@@ -41,6 +40,7 @@ export function IscrizioneForm({ persona, scuole, linee, fermate, informativa }:
     for (const b of bambini) if (!b.nome.trim() || !b.cognome.trim() || !b.fermata) { setErrore("Per ogni bambino servono nome, cognome e fermata."); return; }
     if (!genNome.trim() || !genCognome.trim()) { setErrore("Scrivi nome e cognome del genitore."); return; }
     start(async () => {
+      const supabase = supabaseBrowser();
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { error } = await supabase.from("persone").update({ nome: genNome.trim(), cognome: genCognome.trim() }).eq("id", user.id);

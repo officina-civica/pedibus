@@ -11,7 +11,6 @@ type Pk = { id: string; friendly_name?: string | null; created_at?: string };
 
 /* La passkey: dopo il primo accesso col codice, da qui si attiva lo sblocco del telefono. */
 export function Passkey() {
-  const supabase = supabaseBrowser();
   const [supportata, setSupportata] = useState(false);
   const [lista, setLista] = useState<Pk[] | null>(null);
   const [errore, setErrore] = useState<string | null>(null);
@@ -19,7 +18,7 @@ export function Passkey() {
 
   const carica = async () => {
     try {
-      const { data } = await supabase.auth.passkey.list();
+      const { data } = await supabaseBrowser().auth.passkey.list();
       setLista(((data as unknown as { passkeys?: Pk[] } | null)?.passkeys ?? (Array.isArray(data) ? (data as Pk[]) : [])) as Pk[]);
     } catch { setLista([]); }
   };
@@ -34,7 +33,7 @@ export function Passkey() {
     setErrore(null);
     try {
       const nome = /iPhone|iPad/.test(navigator.userAgent) ? "iPhone" : /Android/.test(navigator.userAgent) ? "Android" : "Questo dispositivo";
-      const { error } = await supabase.auth.registerPasskey({ friendlyName: nome } as never);
+      const { error } = await supabaseBrowser().auth.registerPasskey({ friendlyName: nome } as never);
       if (error) { setErrore(error.message); return; }
       await carica();
     } catch (e) {
@@ -43,7 +42,7 @@ export function Passkey() {
   });
 
   const rimuovi = (id: string) => start(async () => {
-    try { await supabase.auth.passkey.delete({ id } as never); await carica(); } catch (e) { setErrore(e instanceof Error ? e.message : "Errore"); }
+    try { await supabaseBrowser().auth.passkey.delete({ id } as never); await carica(); } catch (e) { setErrore(e instanceof Error ? e.message : "Errore"); }
   });
 
   return (

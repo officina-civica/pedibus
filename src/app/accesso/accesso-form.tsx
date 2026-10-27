@@ -20,7 +20,6 @@ export function normalizzaTelefono(raw: string): string | null {
 
 export function AccessoForm() {
   const router = useRouter();
-  const supabase = supabaseBrowser();
   const [fase, setFase] = useState<"telefono" | "codice">("telefono");
   const [telefono, setTelefono] = useState("");
   const [codice, setCodice] = useState("");
@@ -41,6 +40,7 @@ export function AccessoForm() {
     const tel = normalizzaTelefono(telefono);
     if (!tel) { setErrore("Scrivi il numero di cellulare, ad esempio 333 123 4567."); return; }
     start(async () => {
+      const supabase = supabaseBrowser();
       const { error } = await supabase.auth.signInWithOtp({ phone: tel, options: { channel: "sms" } });
       if (error) { setErrore(messaggio(error.message)); return; }
       setTelefono(tel);
@@ -53,6 +53,7 @@ export function AccessoForm() {
     const token = codice.replace(/\D/g, "");
     if (token.length !== 6) { setErrore("Il codice ha 6 cifre."); return; }
     start(async () => {
+      const supabase = supabaseBrowser();
       const { error } = await supabase.auth.verifyOtp({ phone: telefono, token, type: "sms" });
       if (error) { setErrore(messaggio(error.message)); return; }
       entrato();
@@ -63,7 +64,7 @@ export function AccessoForm() {
     setErrore(null);
     start(async () => {
       try {
-        const { error } = await supabase.auth.signInWithPasskey();
+        const { error } = await supabaseBrowser().auth.signInWithPasskey();
         if (error) { setErrore(messaggio(error.message)); return; }
         entrato();
       } catch (e) {
