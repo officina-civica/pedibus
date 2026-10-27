@@ -29,7 +29,12 @@ export function IscrizioneForm({ persona, scuole, linee, fermate, informativa }:
   const [genNome, setGenNome] = useState(persona?.nome ?? "");
   const [genCognome, setGenCognome] = useState(persona?.cognome ?? "");
   const [bambini, setBambini] = useState<Bambino[]>([{ nome: "", cognome: persona?.cognome ?? "", classe: CLASSI[0], genere: "", fermata: "" }]);
-  const [contatti, setContatti] = useState([{ nome: persona ? `${persona.nome} ${persona.cognome}` : "", relazione: "genitore", telefono: persona?.telefono ?? "" }, { nome: "", relazione: "", telefono: "" }]);
+  // Il primo contatto d'emergenza è chi sta iscrivendo: nome e cognome seguono i campi qui sopra,
+  // il telefono è quello con cui è entrato. Si sceglie solo come farsi chiamare (mamma, papà…).
+  const [relazioneGenitore, setRelazioneGenitore] = useState("genitore");
+  const [contatti, setContatti] = useState([{ nome: "", relazione: "", telefono: "" }]);
+  const primoContatto = { nome: `${genNome.trim()} ${genCognome.trim()}`.trim(), relazione: relazioneGenitore, telefono: persona?.telefono ?? "" };
+  const tuttiIContatti = [primoContatto, ...contatti];
   const [consenso, setConsenso] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
   const [fatto, setFatto] = useState<string[] | null>(null);
@@ -56,7 +61,7 @@ export function IscrizioneForm({ persona, scuole, linee, fermate, informativa }:
         const { error } = await supabase.rpc("iscrivi_bambino", {
           p_scuola: scuola, p_nome: b.nome.trim(), p_cognome: b.cognome.trim(), p_classe: b.classe, p_genere: b.genere || null,
           p_linea: fermata.linea, p_fermata: fermata.id, p_informativa: informativa.id,
-          p_contatti: contatti.filter((c) => c.nome && c.telefono).map((c, i) => ({ ...c, relazione: c.relazione || "contatto", ordine: i + 1 })),
+          p_contatti: tuttiIContatti.filter((c) => c.nome && c.telefono).map((c, i) => ({ ...c, relazione: c.relazione || "contatto", ordine: i + 1 })),
         });
         if (error) { setErrore(error.message); return; }
         nomi.push(b.nome.trim());
@@ -139,13 +144,19 @@ export function IscrizioneForm({ persona, scuole, linee, fermate, informativa }:
       <div className="flex flex-col gap-2">
         <H2>Contatti d&apos;emergenza</H2>
         <p className="text-[13px] leading-[1.5] text-muted-foreground">Li vede solo il volontario di turno sulla linea, durante il turno. Nessun dato sanitario.</p>
+        <div className="grid grid-cols-[1.3fr_1fr_1.2fr] items-center gap-2">
+          <span className="truncate text-sm" title={primoContatto.nome || undefined}>{primoContatto.nome || <span className="text-muted-foreground">Tu (nome qui sopra)</span>}</span>
+          <Input placeholder="mamma, papà…" aria-label="Come farti chiamare" value={relazioneGenitore} onChange={(e) => setRelazioneGenitore(e.target.value)} />
+          <span className="truncate text-sm tabular-nums text-muted-foreground">{primoContatto.telefono || "—"}</span>
+        </div>
         {contatti.map((c, i) => (
           <div key={i} className="grid grid-cols-[1.3fr_1fr_1.2fr] gap-2">
-            <Input placeholder="Nome" value={c.nome} onChange={(e) => setContatti(contatti.map((x, j) => j === i ? { ...x, nome: e.target.value } : x))} />
-            <Input placeholder="mamma, nonno…" value={c.relazione} onChange={(e) => setContatti(contatti.map((x, j) => j === i ? { ...x, relazione: e.target.value } : x))} />
-            <Input placeholder="+39 3xx…" type="tel" value={c.telefono} onChange={(e) => setContatti(contatti.map((x, j) => j === i ? { ...x, telefono: e.target.value } : x))} />
+            <Input placeholder="Nome" aria-label={`Contatto ${i + 2}: nome`} value={c.nome} onChange={(e) => setContatti(contatti.map((x, j) => j === i ? { ...x, nome: e.target.value } : x))} />
+            <Input placeholder="mamma, nonno…" aria-label={`Contatto ${i + 2}: chi è`} value={c.relazione} onChange={(e) => setContatti(contatti.map((x, j) => j === i ? { ...x, relazione: e.target.value } : x))} />
+            <Input placeholder="+39 3xx…" type="tel" aria-label={`Contatto ${i + 2}: telefono`} value={c.telefono} onChange={(e) => setContatti(contatti.map((x, j) => j === i ? { ...x, telefono: e.target.value } : x))} />
           </div>
         ))}
+        <Button variant="outline" size="sm" className="self-start border-dashed" onClick={() => setContatti([...contatti, { nome: "", relazione: "", telefono: "" }])}><Plus /> Un altro contatto</Button>
       </div>
 
       <Field orientation="horizontal">

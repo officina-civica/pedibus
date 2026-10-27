@@ -25,7 +25,7 @@ export default async function IscrizionePage() {
         <span className="text-[13px] text-muted-foreground">Iscrizione</span>
       </div>
       <IscrizioneForm
-        persona={s.persona ? { nome: s.persona.nome, cognome: s.persona.cognome, telefono: s.persona.telefono ?? s.telefono } : null}
+        persona={{ nome: s.persona?.nome ?? "", cognome: s.persona?.cognome ?? "", telefono: s.persona?.telefono ?? (s.telefono ? `+${s.telefono.replace(/^\+/, "")}` : null) }}
         scuole={scuole ?? []} linee={linee ?? []} fermate={fermate ?? []} informativa={informative?.[0] ?? null}
       />
     </main>
