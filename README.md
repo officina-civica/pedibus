@@ -14,6 +14,13 @@ interattivo *Pedibus Vedano* (demo con regia + mappa di tutte le schermate).
 ## Struttura
 
 ```
+src/                                  l'app (Next.js 16, App Router, Tailwind 4, componenti stile shadcn/ui)
+  app/accesso                         telefono → codice SMS; passkey
+  app/(app)/presenze|avvisi|profilo   il genitore (fatto); turni, appello, oggi, iscrizioni, linee: segnaposto
+  app/(app)/azioni.ts                 server actions: presenze (RPC), avvisi letti, abbonamenti push, ruolo, uscita
+  lib/supabase                        client browser / server (@supabase/ssr); proxy.ts rinfresca la sessione
+  lib/database.types.ts               tipi del DB scritti a mano (da sostituire con `supabase gen types`)
+public/sw.js, manifest.webmanifest    PWA: service worker per le push, icone
 supabase/
   config.toml                         configurazione CLI
   migrations/
@@ -113,7 +120,29 @@ Due avvertenze. Le passkey in Supabase sono sperimentali: l'API può cambiare, e
 `auth: { experimental: { passkey: true } }`. E `rp_id` in `config.toml` deve essere il **dominio definitivo**
 dell'app: cambiarlo dopo invalida tutte le passkey registrate. Oggi è `localhost`: va deciso prima del primo utente vero.
 
-## Provare in locale
+## L'app
+
+```bash
+cp .env.example .env.local      # URL e chiave anon del progetto, chiave pubblica VAPID
+npm install
+npm run dev                     # http://localhost:3000
+npm run build                   # deve restare verde
+```
+
+Fatto: accesso (codice SMS, passkey), shell con barra per ruolo e cambio ruolo per chi ne ha più d'uno, e il
+genitore completo — Presenze (stato e azione affiancati, chiusura alle 18:00, stato delle linee con conteggi via
+`stato_mie_linee`), Avvisi (archivio, letti all'apertura), Profilo (bambini, backup, contatti, privacy,
+**attivazione delle push su questo telefono**, **passkey**). Chi entra senza un ruolo approvato vede "In attesa".
+
+Scelte da sapere: le pagine sono tutte dinamiche (`cacheComponents` spento: dati per utente ovunque); i dati
+passano da Supabase con la RLS dell'utente, le regole dalle RPC; la lettura dei conteggi di linea è una funzione
+`security definer` perché il genitore non può leggere le presenze degli altri. Su iPhone le push richiedono l'app
+aggiunta alla schermata Home: il profilo lo spiega. Il registry di shadcn non era raggiungibile dalla sandbox:
+i componenti (`src/components/ui`) sono scritti a mano nello stesso stile; `npx shadcn add` funziona comunque.
+
+Prossimo passo: volontario (Turni con «Non posso venire», Appello), poi amministratore.
+
+## Provare in locale (database)
 
 Serve un Postgres 16+ raggiungibile come superuser (senza Supabase: `tests/shim_auth.sql` fornisce il minimo).
 
@@ -148,6 +177,6 @@ compare in `cron.job`).
 
 1. Account Twilio (mittente alfanumerico "PEDIBUS", da verificare la pre-registrazione per l'Italia), chiavi VAPID,
    deploy della funzione e `impostazioni` compilate: vedi sopra.
-2. L'app: Next.js + shadcn/ui, PWA con service worker per le push, schermate dal prototipo — genitore, poi volontario,
-   poi admin. Dominio definitivo deciso prima delle passkey.
+2. L'app: volontario (Turni, Appello) e amministratore (Oggi, Iscrizioni, Linee, Turni); il genitore c'è.
+   Iscrizione dall'app (oggi via RPC `iscrivi_bambino`, senza schermata). Dominio definitivo deciso prima delle passkey.
 3. L'algoritmo a vincoli vero per la bozza mensile, con il confronto "cosa cambia" alla rigenerazione.

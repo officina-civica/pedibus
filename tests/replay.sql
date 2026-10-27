@@ -75,6 +75,9 @@ select verifica((select count(*) from turni_volontari) = 0, 'Giulia non vede chi
 select verifica((select count(*) from presenze) = 0, 'Giulia non vede le assenze degli altri');
 select verifica((select count(*) from contatti_emergenza) = 4, 'Giulia vede i contatti dei suoi bambini');
 select verifica((select count(*) from avvisi) = 0, 'Giulia non ha ancora avvisi');
+select verifica(mio_giorno_riferimento() = '2026-10-27' or mio_giorno_riferimento() >= current_date, 'giorno di riferimento calcolato');
+select verifica((select count(*) from stato_mie_linee('2026-10-27')) = 2, 'stato_mie_linee: Verde e Blu');
+select verifica((select presenti from stato_mie_linee('2026-10-27') where nome = 'Linea Blu') = 4, 'Blu: 4 presenti prima che Giulia segni Sofia');
 select verifica(segna_presenza(:sofia, 'assente', '2026-10-27', '2026-10-26 17:30+01') = 'Assenza segnalata.', 'assenza di Sofia prima delle 18:00');
 select verifica((select not tardiva from presenze where bambino_id = :sofia), 'non è tardiva');
 select deve_fallire(format('select segna_presenza(%L, %L, %L, %L)', :matteo, 'assente', '2026-10-27', '2026-10-26 17:31+01'), 'Giulia non può segnare Matteo');
@@ -115,6 +118,7 @@ set role authenticated;
 select come(:giulia);
 select verifica(segna_presenza(:sofia, 'presente', '2026-10-27', '2026-10-26 20:40+01') like 'Modifica tardiva%', 'modifica tardiva accettata');
 select verifica((select tardiva from presenze where bambino_id = :sofia), 'segnata come tardiva');
+select verifica((select stato = 'riattivato' and presenti = 4 from stato_mie_linee('2026-10-27') where nome = 'Linea Blu'), 'stato_mie_linee riflette la riattivazione');
 select verifica(titoli_avvisi(:giulia) like '%| Linea Blu riattivata', 'Giulia sa che la Blu è riattivata');
 select come(:giorgio);
 select verifica(titoli_avvisi(:giorgio) = 'Linea Blu annullata per domani | Sofia Bianchi: assenza annullata, domani c''è (modifica tardiva) | Linea Blu riattivata', 'avvisi di Giorgio: ' || titoli_avvisi(:giorgio));

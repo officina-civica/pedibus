@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+/* Token del prototipo: shadcn/ui zinc, accento = arancio pettorina. */
+:root {
+  --bg: #f4f4f5;
+  --card: #ffffff;
+  --fg: #09090b;
+  --muted: #71717a;
+  --muted-bg: #f4f4f5;
+  --border: #e4e4e7;
+  --primary: #18181b;
+  --primary-fg: #fafafa;
+  --accent: #c2410c;
+  --accent-soft: #ffedd5;
+  --accent-fg: #9a3412;
+  --accent-line: #fdba74;
+  --ok: #15803d;
+  --ok-soft: #f0fdf4;
+  --ok-fg: #166534;
+  --ok-line: #bbf7d0;
+  --danger: #b91c1c;
+  --danger-soft: #fef2f2;
+  --danger-line: #fecaca;
+  --radius: 8px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #09090b;
+    --card: #18181b;
+    --fg: #fafafa;
+    --muted: #a1a1aa;
+    --muted-bg: #27272a;
+    --border: #3f3f46;
+    --primary: #fafafa;
+    --primary-fg: #18181b;
+    --accent: #fb923c;
+    --accent-soft: #431407;
+    --accent-fg: #fdba74;
+    --accent-line: #7c2d12;
+    --ok: #4ade80;
+    --ok-soft: #052e16;
+    --ok-fg: #86efac;
+    --ok-line: #166534;
+    --danger: #f87171;
+    --danger-soft: #450a0a;
+    --danger-line: #7f1d1d;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-muted-bg: var(--muted-bg);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-fg: var(--primary-fg);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-line: var(--accent-line);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-ok-fg: var(--ok-fg);
+  --color-ok-line: var(--ok-line);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-line: var(--danger-line);
+  --radius-md: var(--radius);
+  --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tabular { font-variant-numeric: tabular-nums; }
