@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Plus, Trash2 } from "lucide-react";
-import { supabaseBrowser } from "@/lib/supabase/client";
+import { iscriviBambini } from "@/app/(app)/azioni";
 import type { Informativa } from "@/lib/database.types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -21,21 +21,21 @@ type Fermata = { id: string; linea_id: string; ordine: number; nome: string; ora
 type Bambino = { nome: string; cognome: string; classe: string; genere: "F" | "M" | ""; fermata: string };
 const CLASSI = ["1ª A", "1ª B", "1ª C", "2ª A", "2ª B", "2ª C", "3ª A", "3ª B", "3ª C", "4ª A", "4ª B", "4ª C", "5ª A", "5ª B", "5ª C"];
 
-export function IscrizioneForm({ persona, scuole, linee, fermate, informativa }: { persona: { nome: string; cognome: string; telefono: string | null } | null; scuole: Scuola[]; linee: Linea[]; fermate: Fermata[]; informativa: Informativa | null }) {
+export function IscrizioneForm({ persona, scuole, linee, fermate, informativa }: { persona: { nome: string; cognome: string; telefono: string | null; informativaId: string | null }; scuole: Scuola[]; linee: Linea[]; fermate: Fermata[]; informativa: Informativa | null }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [scuola, setScuola] = useState(scuole[0]?.id ?? "");
-  const [cognome, setCognome] = useState(persona?.cognome ?? "");
-  const [genNome, setGenNome] = useState(persona?.nome ?? "");
-  const [genCognome, setGenCognome] = useState(persona?.cognome ?? "");
-  const [bambini, setBambini] = useState<Bambino[]>([{ nome: "", cognome: persona?.cognome ?? "", classe: CLASSI[0], genere: "", fermata: "" }]);
-  // Il primo contatto d'emergenza è chi sta iscrivendo: nome e cognome seguono i campi qui sopra,
-  // il telefono è quello con cui è entrato. Si sceglie solo come farsi chiamare (mamma, papà…).
+  const [cognome, setCognome] = useState(persona.cognome);
+  const [bambini, setBambini] = useState<Bambino[]>([{ nome: "", cognome: persona.cognome, classe: CLASSI[0], genere: "", fermata: "" }]);
+  // Il primo contatto d'emergenza è chi sta iscrivendo: nome, cognome e telefono della registrazione.
+  // Si sceglie solo come farsi chiamare (mamma, papà…).
   const [relazioneGenitore, setRelazioneGenitore] = useState("genitore");
   const [contatti, setContatti] = useState([{ nome: "", relazione: "", telefono: "" }]);
-  const primoContatto = { nome: `${genNome.trim()} ${genCognome.trim()}`.trim(), relazione: relazioneGenitore, telefono: persona?.telefono ?? "" };
+  const primoContatto = { nome: `${persona.nome} ${persona.cognome}`.trim(), relazione: relazioneGenitore, telefono: persona.telefono ?? "" };
+  // Consenso: dato in registrazione per questa versione dell'informativa → non si richiede.
+  const consensoGiaDato = !!informativa && persona.informativaId === informativa.id;
   const tuttiIContatti = [primoContatto, ...contatti];
-  const [consenso, setConsenso] = useState(false);
+  const [consenso, setConsenso] = useState(consensoGiaDato);
   const [errore, setErrore] = useState<string | null>(null);
   const [fatto, setFatto] = useState<string[] | null>(null);
 
@@ -46,27 +46,17 @@ export function IscrizioneForm({ persona, scuole, linee, fermate, informativa }:
     setErrore(null);
     if (!informativa) { setErrore("Manca l'informativa privacy: contatta il comitato."); return; }
     if (!consenso) { setErrore("Serve il consenso all'informativa."); return; }
-    for (const b of bambini) if (!b.nome.trim() || !b.cognome.trim() || !b.fermata) { setErrore("Per ogni bambino servono nome, cognome e fermata."); return; }
-    if (!genNome.trim() || !genCognome.trim()) { setErrore("Scrivi nome e cognome del genitore."); return; }
+    for (const b of bambini) if (!b.nome.trim() || !b.cognome.trim()) { setErrore("Per ogni bambino servono nome e cognome."); return; }
     start(async () => {
-      const supabase = supabaseBrowser();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { error } = await supabase.from("persone").update({ nome: genNome.trim(), cognome: genCognome.trim() }).eq("id", user.id);
-        if (error) { setErrore(error.message); return; }
-      }
-      const nomi: string[] = [];
-      for (const b of bambini) {
-        const fermata = opzioniFermate.find((o) => o.id === b.fermata)!;
-        const { error } = await supabase.rpc("iscrivi_bambino", {
-          p_scuola: scuola, p_nome: b.nome.trim(), p_cognome: b.cognome.trim(), p_classe: b.classe, p_genere: b.genere || null,
-          p_linea: fermata.linea, p_fermata: fermata.id, p_informativa: informativa.id,
-          p_contatti: tuttiIContatti.filter((c) => c.nome && c.telefono).map((c, i) => ({ ...c, relazione: c.relazione || "contatto", ordine: i + 1 })),
-        });
-        if (error) { setErrore(error.message); return; }
-        nomi.push(b.nome.trim());
-      }
-      setFatto(nomi);
+      const r = await iscriviBambini(scuola, informativa.id,
+        bambini.map((b) => {
+          const fermata = b.fermata ? opzioniFermate.find((o) => o.id === b.fermata) ?? null : null;
+          return { nome: b.nome, cognome: b.cognome, classe: b.classe, genere: b.genere || null, lineaId: fermata?.linea ?? null, fermataId: fermata?.id ?? null };
+        }),
+        tuttiIContatti.filter((c) => c.nome && c.telefono).map((c, i) => ({ ...c, relazione: c.relazione || "contatto", ordine: i + 1 })),
+      );
+      if (!r.ok) { setErrore(r.messaggio); return; }
+      setFatto(r.iscritti);
     });
   };
 
@@ -94,13 +84,10 @@ export function IscrizioneForm({ persona, scuole, linee, fermate, informativa }:
         </Field>
       )}
 
-      <div className="flex flex-col gap-2">
-        <H2>Genitore principale</H2>
-        <div className="grid grid-cols-2 gap-2.5">
-          <Field><FieldLabel htmlFor="gnome">Nome</FieldLabel><Input id="gnome" value={genNome} onChange={(e) => setGenNome(e.target.value)} required /></Field>
-          <Field><FieldLabel htmlFor="gcognome">Cognome</FieldLabel><Input id="gcognome" value={genCognome} onChange={(e) => { setGenCognome(e.target.value); if (!cognome) setCognome(e.target.value); }} required /></Field>
-        </div>
-        <p className="text-[13px] text-muted-foreground">{persona?.telefono ? `Telefono ${persona.telefono}: ` : ""}il numero con cui sei entrato è quello degli avvisi.</p>
+      <div className="flex flex-col gap-1">
+        <H2>Genitore</H2>
+        <p className="text-sm"><b>{persona.nome} {persona.cognome}</b>{persona.telefono ? <span className="text-muted-foreground"> · {persona.telefono}</span> : null}</p>
+        <p className="text-[13px] text-muted-foreground">Il numero con cui sei entrato è quello degli avvisi. Nome e cognome si cambiano dal Profilo.</p>
       </div>
 
       {bambini.map((b, i) => (
@@ -129,11 +116,11 @@ export function IscrizioneForm({ persona, scuole, linee, fermate, informativa }:
             <div className="border-t border-dashed pt-2.5">
               <Field>
                 <FieldLabel htmlFor={`fermata${i}`}>Fermata dove sale</FieldLabel>
-                <NativeSelect id={`fermata${i}`} className="w-full" value={b.fermata} onChange={(e) => setBambini(bambini.map((x, j) => j === i ? { ...x, fermata: e.target.value } : x))} required>
-                  <NativeSelectOption value="">Scegli la fermata…</NativeSelectOption>
+                <NativeSelect id={`fermata${i}`} className="w-full" value={b.fermata} onChange={(e) => setBambini(bambini.map((x, j) => j === i ? { ...x, fermata: e.target.value } : x))}>
+                  <NativeSelectOption value="">Non lo so ancora: la decidiamo col comitato</NativeSelectOption>
                   {opzioniFermate.map((o) => <NativeSelectOption key={o.id} value={o.id}>{o.label}</NativeSelectOption>)}
                 </NativeSelect>
-                <FieldDescription>Si sceglie a parte: non dipende da scuola e classe.</FieldDescription>
+                <FieldDescription>Se non la sai, lasciala vuota: l&apos;amministratore la assegna quando approva.</FieldDescription>
               </Field>
             </div>
           </Card>
@@ -159,10 +146,14 @@ export function IscrizioneForm({ persona, scuole, linee, fermate, informativa }:
         <Button variant="outline" size="sm" className="self-start border-dashed" onClick={() => setContatti([...contatti, { nome: "", relazione: "", telefono: "" }])}><Plus /> Un altro contatto</Button>
       </div>
 
-      <Field orientation="horizontal">
-        <Checkbox id="consenso" checked={consenso} onCheckedChange={(v) => setConsenso(v === true)} required />
-        <FieldLabel htmlFor="consenso" className="text-[13px] leading-[1.5] font-normal">Ho letto l&apos;{informativa?.url ? <a className="underline" href={informativa.url} target="_blank" rel="noreferrer">informativa privacy</a> : "informativa privacy"} (versione {informativa?.versione ?? "—"}) e acconsento al trattamento dei dati per il servizio Pedibus. Titolare: comitato Officina Civica.</FieldLabel>
-      </Field>
+      {consensoGiaDato ? (
+        <p className="text-[13px] text-muted-foreground">Vale l&apos;informativa privacy (versione {informativa?.versione}) che hai accettato alla registrazione.</p>
+      ) : (
+        <Field orientation="horizontal">
+          <Checkbox id="consenso" checked={consenso} onCheckedChange={(v) => setConsenso(v === true)} />
+          <FieldLabel htmlFor="consenso" className="text-[13px] leading-[1.5] font-normal">Ho letto l&apos;{informativa?.url ? <a className="underline" href={informativa.url} target="_blank" rel="noreferrer">informativa privacy</a> : "informativa privacy"} (versione {informativa?.versione ?? "—"}) e acconsento al trattamento dei dati per il servizio Pedibus. Titolare: comitato Officina Civica.</FieldLabel>
+        </Field>
+      )}
 
       {errore && <Alert variant="destructive"><AlertDescription>{errore}</AlertDescription></Alert>}
       <Button type="submit" size="lg" className="w-full" disabled={pending}>{pending ? "Invio…" : "Invia l'iscrizione"}</Button>

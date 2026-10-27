@@ -328,6 +328,44 @@ select deve_fallire(format('select decidi_iscrizione(%L, %L)', (select id from i
 reset role;
 
 -- ---------------------------------------------------------------------------
+\echo '  · registrazione: nuovo utente, genitore e volontario, fermata da assegnare'
+-- ---------------------------------------------------------------------------
+-- Un numero nuovo entra con l'OTP: il trigger crea la persona vuota. Poi si registra.
+insert into auth.users (id, phone) values ('a0000000-0000-4000-8000-000000000099', '393330000099');
+\set nuovo '''a0000000-0000-4000-8000-000000000099'''
+set role authenticated;
+select come(:nuovo);
+select verifica((select nome = '' from persone where id = :nuovo), 'la persona nuova nasce senza nome');
+select deve_fallire(format('select registrati(%L, %L, %L, %L, %L)', 'Rita', 'Neri', :scuola, '{admin}', (select id from informative limit 1)), 'nessuno si registra come admin');
+select deve_fallire(format('select registrati(%L, %L, %L, %L, %L)', '', 'Neri', :scuola, '{genitore}', (select id from informative limit 1)), 'serve il nome');
+select registrati('Rita', 'Neri', :scuola, '{genitore,volontario}', (select id from informative limit 1), '2026-10-27 18:00+01');
+select verifica((select nome || ' ' || cognome from persone where id = :nuovo) = 'Rita Neri' and (select consenso_il is not null from persone where id = :nuovo), 'registrata con consenso');
+select verifica((select count(*) from ruoli where persona_id = :nuovo and stato = 'in_attesa') = 2, 'genitore e volontario in attesa');
+select registrati('Rita', 'Neri', :scuola, '{genitore,volontario}', (select id from informative limit 1), '2026-10-27 18:01+01');
+select verifica((select count(*) from ruoli where persona_id = :nuovo) = 2, 'registrarsi due volte non duplica');
+-- Iscrive un bambino senza sapere la fermata.
+select deve_fallire(format('select iscrivi_bambino(%L, %L, %L, %L, null, %L, null, %L)', :scuola, 'Nina', 'Neri', '1ª A', :verde, (select id from informative limit 1)), 'linea senza fermata non passa');
+select iscrivi_bambino(:scuola, 'Nina', 'Neri', '1ª A', 'F', null, null, (select id from informative limit 1), '[]', '2026-10-27 18:02+01') as nina \gset
+select verifica((select linea_id is null and fermata_id is null and stato = 'in_attesa' from iscrizioni where bambino_id = :'nina'), 'iscrizione in attesa senza fermata');
+select verifica((select count(*) from turni) = 0, 'Rita non vede turni: non è ancora approvata');
+-- L'admin: non può approvare senza assegnare; poi assegna linea e fermata.
+select come(:admin);
+select verifica(titoli_avvisi(:admin) like '%Nuovo volontario: Rita Neri%' and titoli_avvisi(:admin) like '%Nuova iscrizione da Rita Neri%', 'admin avvisato di volontario e iscrizione');
+select deve_fallire(format('select decidi_iscrizione(%L, %L)', (select id from iscrizioni where bambino_id = :'nina'), 'approvata'), 'approvare senza fermata non si può');
+select deve_fallire(format('select decidi_iscrizione(%L, %L, null, now(), %L, %L)', (select id from iscrizioni where bambino_id = :'nina'), 'approvata', :verde, 'd0000000-0000-4000-8000-000000000106'), 'la fermata di arrivo non vale');
+select decidi_iscrizione((select id from iscrizioni where bambino_id = :'nina'), 'approvata', null, '2026-10-27 18:10+01', :verde, 'd0000000-0000-4000-8000-000000000103');
+select verifica((select linea_id = :verde and fermata_id = 'd0000000-0000-4000-8000-000000000103' and stato = 'approvata' from iscrizioni where bambino_id = :'nina'), 'approvata con linea e fermata assegnate');
+select verifica((select stato from ruoli where persona_id = :nuovo and ruolo = 'genitore') = 'approvata', 'Rita è genitore approvata');
+select come(:nuovo);
+select deve_fallire(format('select nomina_admin(%L, %L)', :nuovo, :scuola), 'un genitore non nomina admin');
+select come(:admin);
+select nomina_admin(:nuovo, :scuola, '2026-10-27 18:20+01');
+select come(:nuovo);
+select verifica(is_admin(:scuola), 'Rita ora è admin');
+select verifica(titoli_avvisi(:nuovo) like '%Sei amministratore del pedibus%', 'e avvisata');
+reset role;
+
+-- ---------------------------------------------------------------------------
 \echo '  · bozza di novembre: generata, inviata, poi un''eccezione la rende da rivedere'
 -- ---------------------------------------------------------------------------
 set role authenticated;

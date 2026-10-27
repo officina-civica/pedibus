@@ -8,8 +8,10 @@ export type Sessione = {
   telefono: string | null;
   persona: Persona | null;
   ruoli: Ruolo[];              // solo quelli approvati
+  ruoliRichiesti: Ruolo[];     // tutti, anche in attesa o rifiutati
   ruoloAttivo: RuoloTipo | null;
   scuolaId: string | null;
+  registrato: boolean;         // ha detto chi è (nome e cognome): altrimenti va in /registrazione
 };
 
 export const HOME: Record<RuoloTipo, string> = { genitore: "/presenze", volontario: "/turni", admin: "/oggi" };
@@ -32,7 +34,8 @@ export async function getSessione(): Promise<Sessione> {
   const ruoloAttivo = scelto && disponibili.includes(scelto) ? scelto : (disponibili[0] ?? null);
   const scuolaId = ruoli.find((r) => r.ruolo === ruoloAttivo)?.scuola_id ?? ruoli[0]?.scuola_id ?? null;
 
-  return { userId: user.id, telefono: user.phone ?? null, persona: persona ?? null, ruoli, ruoloAttivo, scuolaId };
+  const registrato = !!persona && persona.nome.trim() !== "" && persona.cognome.trim() !== "";
+  return { userId: user.id, telefono: user.phone ?? null, persona: persona ?? null, ruoli, ruoliRichiesti: ruoliTutti ?? [], ruoloAttivo, scuolaId, registrato };
 }
 
 export const nomeCompleto = (p: Persona | null) => (p ? `${p.nome} ${p.cognome}`.trim() : "");

@@ -6,6 +6,7 @@ import { BottomNav } from "@/components/shell/bottom-nav";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const s = await getSessione();
+  if (!s.registrato) redirect("/registrazione");
   if (!s.ruoloAttivo) redirect("/in-attesa");
 
   const supabase = await supabaseServer();

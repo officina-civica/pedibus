@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test:db": "bash tests/run.sh",
     "e2e:avvia": "bash tests/e2e/avvia.sh",
-    "e2e": "node tests/e2e/giro.js"
+    "e2e": "node tests/e2e/giro.js",
+    "e2e:registrazione": "node tests/e2e/registrazione.js"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

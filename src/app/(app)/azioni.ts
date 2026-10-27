@@ -67,3 +67,30 @@ export async function rimuoviDelega(delegatoId: string) {
   await supabase.from("deleghe").delete().eq("genitore_id", user.id).eq("delegato_id", delegatoId);
   revalidatePath("/profilo");
 }
+
+/* Registrazione: chi sei (nome, cognome, genitore e/o volontario) e consenso, una volta sola. */
+export async function registrati(nome: string, cognome: string, scuolaId: string, ruoli: RuoloTipo[], informativaId: string): Promise<{ ok: boolean; messaggio: string }> {
+  const supabase = await supabaseServer();
+  const { error } = await supabase.rpc("registrati", { p_nome: nome, p_cognome: cognome, p_scuola: scuolaId, p_ruoli: ruoli, p_informativa: informativaId });
+  if (error) return { ok: false, messaggio: error.message };
+  revalidatePath("/", "layout");
+  return { ok: true, messaggio: "Registrazione fatta." };
+}
+
+/* Iscrizione dei bambini: una RPC per bambino; la fermata può mancare (la assegna l'admin). */
+export type BambinoDaIscrivere = { nome: string; cognome: string; classe: string; genere: "F" | "M" | null; lineaId: string | null; fermataId: string | null };
+export type ContattoEmergenza = { nome: string; relazione: string; telefono: string; ordine: number };
+export async function iscriviBambini(scuolaId: string, informativaId: string, bambini: BambinoDaIscrivere[], contatti: ContattoEmergenza[]): Promise<{ ok: boolean; messaggio: string; iscritti: string[] }> {
+  const supabase = await supabaseServer();
+  const iscritti: string[] = [];
+  for (const b of bambini) {
+    const { error } = await supabase.rpc("iscrivi_bambino", {
+      p_scuola: scuolaId, p_nome: b.nome.trim(), p_cognome: b.cognome.trim(), p_classe: b.classe, p_genere: b.genere,
+      p_linea: b.lineaId, p_fermata: b.fermataId, p_informativa: informativaId, p_contatti: contatti,
+    });
+    if (error) return { ok: false, messaggio: error.message, iscritti };
+    iscritti.push(b.nome.trim());
+  }
+  revalidatePath("/", "layout");
+  return { ok: true, messaggio: "Iscrizione inviata.", iscritti };
+}

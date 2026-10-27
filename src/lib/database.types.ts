@@ -10,7 +10,7 @@ export type RuoloTipo = "genitore" | "volontario" | "admin";
 export type StatoApprovazione = "in_attesa" | "approvata" | "rifiutata";
 export type TipoAvviso = "info" | "ok" | "warn";
 
-export type Persona = { id: string; nome: string; cognome: string; telefono: string | null; email: string | null; creato_il: string };
+export type Persona = { id: string; nome: string; cognome: string; telefono: string | null; email: string | null; creato_il: string; informativa_id: string | null; consenso_il: string | null };
 export type Ruolo = { persona_id: string; scuola_id: string; ruolo: RuoloTipo; stato: StatoApprovazione; note: string | null; richiesto_il: string; deciso_il: string | null };
 export type Scuola = { id: string; comune_id: string; nome: string };
 export type Linea = {
@@ -138,7 +138,9 @@ export type Database = {
       prossima_fermata: { Args: { p_appello: string }; Returns: string };
       consegna: { Args: { p_appello: string }; Returns: undefined };
       contatti_emergenza_turno: { Args: { p_turno: string }; Returns: ContattoTurno[] };
-      decidi_iscrizione: { Args: { p_iscrizione: string; p_stato: StatoApprovazione; p_motivo?: string | null }; Returns: undefined };
+      decidi_iscrizione: { Args: { p_iscrizione: string; p_stato: StatoApprovazione; p_motivo?: string | null; p_linea?: string | null; p_fermata?: string | null }; Returns: undefined };
+      registrati: { Args: { p_nome: string; p_cognome: string; p_scuola: string; p_ruoli: RuoloTipo[]; p_informativa: string }; Returns: undefined };
+      nomina_admin: { Args: { p_persona: string; p_scuola: string }; Returns: undefined };
       decidi_ruolo: { Args: { p_persona: string; p_scuola: string; p_ruolo: RuoloTipo; p_stato: StatoApprovazione; p_note?: string | null }; Returns: undefined };
       imposta_disponibilita: { Args: { p_giorni: number[] }; Returns: undefined };
       segna_eccezione: { Args: { p_giorno: string; p_tipo: TipoEccezione | null }; Returns: string };
@@ -146,7 +148,7 @@ export type Database = {
       invia_bozza: { Args: { p_bozza: string }; Returns: undefined };
       pubblica_bozza: { Args: { p_bozza: string }; Returns: undefined };
       aggiungi_delega: { Args: { p_telefono: string; p_etichetta?: string | null }; Returns: string };
-      iscrivi_bambino: { Args: { p_scuola: string; p_nome: string; p_cognome: string; p_classe: string; p_genere: string | null; p_linea: string; p_fermata: string; p_informativa: string; p_contatti?: unknown }; Returns: string };
+      iscrivi_bambino: { Args: { p_scuola: string; p_nome: string; p_cognome: string; p_classe: string; p_genere: string | null; p_linea: string | null; p_fermata: string | null; p_informativa: string; p_contatti?: unknown }; Returns: string };
     };
     Enums: {
       stato_presenza: StatoPresenza; stato_turno: StatoTurno; ruolo_tipo: RuoloTipo; stato_approvazione: StatoApprovazione; tipo_avviso: TipoAvviso;

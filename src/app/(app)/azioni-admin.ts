@@ -11,9 +11,9 @@ const esito = (error: { message: string } | null, msg: string, paths: string[]):
   return { ok: true, messaggio: msg };
 };
 
-export async function decidiIscrizione(iscrizioneId: string, stato: StatoApprovazione, motivo?: string): Promise<Esito> {
+export async function decidiIscrizione(iscrizioneId: string, stato: StatoApprovazione, motivo?: string, assegna?: { lineaId: string; fermataId: string }): Promise<Esito> {
   const supabase = await supabaseServer();
-  const { error } = await supabase.rpc("decidi_iscrizione", { p_iscrizione: iscrizioneId, p_stato: stato, p_motivo: motivo ?? null });
+  const { error } = await supabase.rpc("decidi_iscrizione", { p_iscrizione: iscrizioneId, p_stato: stato, p_motivo: motivo ?? null, p_linea: assegna?.lineaId ?? null, p_fermata: assegna?.fermataId ?? null });
   return esito(error, stato === "approvata" ? "Iscrizione approvata, notifica inviata." : "Iscrizione rifiutata.", ["/iscrizioni", "/oggi"]);
 }
 

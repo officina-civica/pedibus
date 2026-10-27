@@ -38,6 +38,7 @@ supabase/
     20261027000800_rls_deleghe.sql    il genitore vede il proprio delegato (trovato dal giro e2e)
     20261027000900_deleghe_app.sql    aggiungi_delega(telefono): il backup del genitore dall'app
     20261027001000_sms_solo_otp.sql   interruttori SMS (sms_avvisi, sms_ripiego) + canali(), imposta_canale()
+    20261027001100_registrazione.sql  registrati(), nomina_admin(); fermata facoltativa, assegnata dall'admin in decidi_iscrizione()
   functions/invia-avvisi/index.ts     la Edge Function che svuota la coda: Web Push (+ SMS Twilio se acceso)
   seed.sql                            il "martedì a Vedano" del prototipo (solo sviluppo)
 prototipo/index.html                  il prototipo interattivo (demo con regia + mappa delle schermate)
@@ -133,7 +134,24 @@ e lo stesso `PEDIBUS_CRON_SECRET` in `invia_avvisi_secret`. `pg_net` va acceso d
 
 Due avvertenze. Le passkey in Supabase sono sperimentali: l'API può cambiare, e il client va creato con
 `auth: { experimental: { passkey: true } }`. E `rp_id` in `config.toml` deve essere il **dominio definitivo**
-dell'app: cambiarlo dopo invalida tutte le passkey registrate. Oggi è `localhost`: va deciso prima del primo utente vero.
+dell'app: cambiarlo dopo invalida tutte le passkey registrate. In produzione è `pedibus.officinacivica.com`, impostato
+nella dashboard (Authentication → Passkeys); `config.toml` vale solo per il locale.
+
+## Registrazione e ruoli
+
+Dopo il primo codice SMS l'utente esiste ma non ha detto chi è: l'app lo porta in `/registrazione` (nome, cognome,
+genitore e/o volontario, consenso all'informativa) e ci resta finché non la completa. `registrati()` salva nome e
+consenso e crea i ruoli richiesti **in attesa**: il genitore viene approvato insieme alla prima iscrizione
+(`decidi_iscrizione`), il volontario quando l'admin verifica l'albo (`decidi_ruolo`). Chi ha entrambi i ruoli li
+alterna dalla barra in alto. Finché nessun ruolo è approvato si vede `/in-attesa`, con lo stato di ciascuno.
+
+L'**amministratore non si registra**: il primo si nomina a mano nel database (vedi "Avvio in produzione"), gli altri
+con `nomina_admin()` da parte di un admin, tra le persone già registrate.
+
+L'**iscrizione** di un bambino può arrivare **senza fermata** ("la decidiamo col comitato"): resta in attesa e
+l'amministratore sceglie linea e fermata nella riga di approvazione, in Iscrizioni. Un'iscrizione approvata ha
+sempre linea e fermata (vincolo nel database). Il primo contatto d'emergenza è chi iscrive, con il numero con cui
+è entrato. Il percorso è coperto da `npm run e2e:registrazione`.
 
 ## L'app
 
@@ -241,11 +259,17 @@ Da verificare al primo `db push`: che il ruolo `postgres` del progetto abbia `by
 `security definer` usate dalle policy contano su questo), e che `pg_cron` sia attivo (il job `pedibus_job`
 compare in `cron.job`).
 
+## Avvio in produzione
+
+Il database di produzione parte **vuoto**: niente comune, scuola, linee, fermate, informativa, nessun admin. Prima del
+primo utente vero vanno inseriti con uno script SQL (dall'editor della dashboard): comune e scuola, l'informativa
+privacy in vigore, le linee con le fermate (ordine, orario, capolinea, arrivo), e il primo amministratore
+(`insert into ruoli … 'admin', 'approvata'` sulla persona che si è già registrata). Le migrazioni si spingono con
+`npx supabase db push`.
+
 ## Cosa manca, in ordine
 
-1. Account Twilio (mittente alfanumerico "PEDIBUS", da verificare la pre-registrazione per l'Italia), chiavi VAPID,
-   deploy della funzione e `impostazioni` compilate: vedi sopra.
-2. Primo giro contro il progetto Supabase vero (chiave anon in `.env.local`, migrazioni spinte, Twilio): in locale
-   l'app è verificata da browser contro schema e RLS veri (vedi sopra), ma non ancora con GoTrue, SMS e push reali.
-   Poi: modifica linee/fermate e chiusure dall'app, inserimento manuale. Dominio definitivo prima delle passkey.
-3. L'algoritmo a vincoli vero per la bozza mensile, con il confronto "cosa cambia" alla rigenerazione.
+1. Script dei dati di base in produzione (linee e fermate vere, informativa) e primo admin.
+2. Giro di prova dal telefono sull'indirizzo definitivo: codice SMS, PWA sulla Home, push, passkey.
+3. Modifica linee, fermate e chiusure dall'app; inserimento manuale di chi non usa l'app; nomina admin dall'app.
+4. L'algoritmo a vincoli vero per la bozza mensile, con il confronto "cosa cambia" alla rigenerazione.
