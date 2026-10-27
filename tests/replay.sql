@@ -342,6 +342,28 @@ select deve_fallire('select chiudi_assenze()', 'anon non lancia i job');
 reset role;
 
 -- ---------------------------------------------------------------------------
+\echo '  · push e consegna: abbonamenti propri, coda intatta senza pg_net'
+-- ---------------------------------------------------------------------------
+set role authenticated;
+select come(:giulia);
+insert into push_abbonamenti (persona_id, endpoint, p256dh, auth, user_agent)
+  values (:giulia, 'https://push.example/giulia-1', 'p256dh', 'auth', 'iPhone');
+select deve_fallire(format('insert into push_abbonamenti (persona_id, endpoint, p256dh, auth) values (%L, %L, %L, %L)', :marta, 'https://push.example/x', 'k', 'a'), 'Giulia non abbona Marta');
+select come(:marta);
+select verifica((select count(*) from push_abbonamenti) = 0, 'Marta non vede gli abbonamenti di Giulia');
+select deve_fallire('select * from impostazioni', 'nessun utente legge le impostazioni');
+select deve_fallire('select avvisi_webhook()', 'il webhook non è chiamabile dall''app');
+reset role;
+-- Con un URL configurato ma senza pg_net (locale) l'inserimento di un avviso non fallisce.
+update impostazioni set valore = 'https://example.invalid/functions/v1/invia-avvisi' where chiave = 'invia_avvisi_url';
+select verifica(not avvisi_webhook(), 'senza pg_net il webhook non fa nulla, senza errori');
+select avvisa(:giulia, 'info', 'Prova coda', 'Resta in coda finché la funzione non la svuota.');
+select verifica((select push_esito is null and tentativi = 0 from avvisi where titolo = 'Prova coda'), 'l''avviso è in coda');
+select verifica(not avvisi_ritenta(), 'il ritentativo trova la coda ma, senza pg_net, non può chiamare');
+update impostazioni set valore = '' where chiave = 'invia_avvisi_url';
+select verifica((select count(*) from avvisi where push_esito is null or (sms and sms_esito is null)) > 0, 'la coda contiene gli avvisi della giornata');
+
+-- ---------------------------------------------------------------------------
 \echo '  · dispatcher dei job: una volta al giorno, all''ora giusta'
 -- ---------------------------------------------------------------------------
 select verifica(esegui_job('2026-10-28 17:55+01') is null, 'alle 17:55 nessun job');

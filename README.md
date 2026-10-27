@@ -21,7 +21,10 @@ supabase/
     20261027000200_regole.sql         RPC e funzioni dei job (presenze, soglie, escalation, appello, bozza)
     20261027000300_rls.sql            chi vede cosa, per ruolo
     20261027000400_job.sql            dispatcher pg_cron ogni 5 minuti, orari in Europe/Rome
+    20261027000500_avvisi_push.sql    abbonamenti push, esiti di consegna, webhook verso la Edge Function
+  functions/invia-avvisi/index.ts     la Edge Function che svuota la coda: Web Push + SMS (Twilio)
   seed.sql                            il "martedì a Vedano" del prototipo (solo sviluppo)
+prototipo/index.html                  il prototipo interattivo (demo con regia + mappa delle schermate)
 tests/
   run.sh                              crea un DB locale, applica tutto, rigioca la giornata
   replay.sql                          le 8 fasi + verifiche RLS per genitore, delegato, volontario, admin, anonimo
@@ -39,8 +42,9 @@ tests/
 - `bozze_turni` (bozza mensile: bozza → inviata → pubblicata, `stale` se cambia una disponibilità), `turni` (una linea in un giorno, con lo stato della giornata), `turni_volontari`.
 - `presenze` — presenti salvo avviso: una riga solo se qualcuno ha segnato qualcosa; `tardiva` dopo la chiusura.
 - `appelli`, `appello_bambini` — fermata per fermata: atteso, salito, non trovato, aggiunto.
-- `avvisi` — uno per destinatario; `sms = true` per gli urgenti. L'invio push/SMS è di una Edge Function (da fare).
+- `avvisi` — uno per destinatario; `sms = true` per gli urgenti; `push_esito` / `sms_esito` scritti dalla Edge Function.
 - `job_orari`, `job_eseguiti` — orari dei job modificabili dal pannello, registro delle esecuzioni.
+- `push_abbonamenti` — un abbonamento Web Push per browser/dispositivo; `impostazioni` — chiavi di servizio, senza policy (nessun utente le legge).
 
 ## Le regole, dove stanno
 
@@ -70,6 +74,44 @@ invece di nasconderli (lunedì scoperti, giovedì senza kit): è un segnaposto o
   i contatti d'emergenza solo via `contatti_emergenza_turno`.
 - **Amministratore**: tutto nella propria scuola; ogni decisione resta registrata con chi e quando.
 - **Anonimo**: linee, fermate, informativa (servono per iscriversi).
+
+## Avvisi: push + SMS di riserva (deciso il 27/10)
+
+Il database mette in coda (`avvisi`), la Edge Function `invia-avvisi` consegna. Regola:
+
+- **push** a ogni abbonamento della persona (`push_abbonamenti`); un endpoint che risponde 404/410 è morto e viene segnato;
+- **SMS sempre** per gli urgenti (`sms = true`: linea annullata o riattivata, turno scoperto, bambino non trovato);
+- **SMS di ripiego** per gli avvisi normali solo a chi non ha nessun abbonamento push, se `impostazioni.sms_ripiego = true`
+  (è la voce che decide il costo mensile: con tutti su push gli SMS restano decine al mese);
+- un errore non blocca la coda: si riprova con attesa crescente, fino a 10 tentativi, mai oltre 24 ore.
+
+La funzione viene chiamata subito all'inserimento (trigger → `pg_net`) e ogni 2 minuti come ritentativo (`pg_cron`).
+In locale, senza `pg_net`, il trigger non fa nulla e la coda resta in tabella: i test lo verificano.
+
+Per metterla in produzione, una volta sola:
+
+```bash
+npx web-push generate-vapid-keys                      # chiavi per le push
+npx supabase secrets set --env-file .env.functions    # PEDIBUS_CRON_SECRET, VAPID_*, TWILIO_*
+npx supabase functions deploy invia-avvisi
+```
+
+poi nel SQL editor: `update impostazioni set valore = 'https://hrrdogjoymunfakwduxd.supabase.co/functions/v1/invia-avvisi' where chiave = 'invia_avvisi_url';`
+e lo stesso `PEDIBUS_CRON_SECRET` in `invia_avvisi_secret`. `pg_net` va acceso da *Database → Extensions*.
+
+## Accesso: passkey + codice SMS (deciso il 27/10)
+
+- **Primo accesso** con il numero di telefono: codice via SMS (Twilio, configurato in `config.toml`). Il telefono è
+  l'identità: è quello che il comitato ha già e che compare nell'iscrizione.
+- Dopo il primo accesso l'app propone **la passkey** (sblocco del telefono): da lì `signInWithPasskey()` senza
+  digitare nulla. Il codice SMS resta di riserva per chi non ha o non vuole la passkey.
+- **Amministratore**: in più un'app di autenticazione (TOTP, inclusa in tutti i piani). Il codice SMS come secondo
+  fattore su Supabase è un add-on da 75 $/mese: non vale la spesa.
+- Limiti: 30 SMS/ora per progetto, un codice al minuto per utente — ogni OTP è un SMS pagato.
+
+Due avvertenze. Le passkey in Supabase sono sperimentali: l'API può cambiare, e il client va creato con
+`auth: { experimental: { passkey: true } }`. E `rp_id` in `config.toml` deve essere il **dominio definitivo**
+dell'app: cambiarlo dopo invalida tutte le passkey registrate. Oggi è `localhost`: va deciso prima del primo utente vero.
 
 ## Provare in locale
 
@@ -104,7 +146,8 @@ compare in `cron.job`).
 
 ## Cosa manca, in ordine
 
-1. Edge Function che legge gli `avvisi` non inviati e manda push (Web Push) e SMS (provider da scegliere).
-2. L'app: Next.js + shadcn/ui, PWA, schermate dal prototipo — genitore, poi volontario, poi admin.
-3. Passkey come accesso principale, OTP via SMS di riserva.
-4. L'algoritmo a vincoli vero per la bozza mensile, con il confronto "cosa cambia" alla rigenerazione.
+1. Account Twilio (mittente alfanumerico "PEDIBUS", da verificare la pre-registrazione per l'Italia), chiavi VAPID,
+   deploy della funzione e `impostazioni` compilate: vedi sopra.
+2. L'app: Next.js + shadcn/ui, PWA con service worker per le push, schermate dal prototipo — genitore, poi volontario,
+   poi admin. Dominio definitivo deciso prima delle passkey.
+3. L'algoritmo a vincoli vero per la bozza mensile, con il confronto "cosa cambia" alla rigenerazione.

@@ -36,10 +36,35 @@ enable_signup = true
 double_confirm_changes = true
 enable_confirmations = false
 
+# Accesso (deciso il 27/10): primo accesso con codice via SMS, poi passkey come metodo
+# principale; il codice SMS resta di riserva. Admin: in più un'app di autenticazione (TOTP).
 [auth.sms]
-# Si accende quando è scelto il provider SMS (Twilio, Bird, Vonage, ...).
-enable_signup = false
-enable_confirmations = false
+enable_signup = true
+enable_confirmations = true
+template = "Pedibus: il tuo codice è {{ .Code }}. Vale 5 minuti."
+max_frequency = "60s"
+
+[auth.sms.twilio]
+enabled = true
+account_sid = "env(SUPABASE_AUTH_SMS_TWILIO_ACCOUNT_SID)"
+message_service_sid = "env(SUPABASE_AUTH_SMS_TWILIO_MESSAGE_SERVICE_SID)"
+auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
+
+[auth.rate_limit]
+# Ogni OTP è un SMS pagato: pochi all'ora bastano a 40 famiglie e 30 volontari.
+sms_sent = 30
+token_verifications = 30
+
+# Passkey (WebAuthn): in Supabase è ancora sperimentale, l'API può cambiare.
+# ATTENZIONE: rp_id è il dominio definitivo dell'app. Cambiarlo dopo invalida tutte le
+# passkey registrate: va deciso prima del primo utente vero.
+[auth.passkey]
+enabled = true
+
+[auth.webauthn]
+rp_display_name = "Pedibus Vedano"
+rp_id = "localhost"
+rp_origins = ["http://localhost:3000"]
 
 [auth.mfa]
 max_enrolled_factors = 10
@@ -47,3 +72,7 @@ max_enrolled_factors = 10
 [auth.mfa.totp]
 enroll_enabled = true
 verify_enabled = true
+
+[functions.invia-avvisi]
+# Chiamata da pg_net/pg_cron con il segreto condiviso, non con un JWT utente.
+verify_jwt = false
