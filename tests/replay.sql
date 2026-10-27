@@ -417,6 +417,44 @@ select verifica(sospendi_linea(:'gialla', false, 'Linea di prova') = 0, 'sospend
 reset role;
 
 -- ---------------------------------------------------------------------------
+\echo '  · spostare un bambino di fermata; nominare e revocare amministratori'
+-- ---------------------------------------------------------------------------
+set role authenticated;
+select come(:giulia);
+select deve_fallire(format('select sposta_iscrizione(%L, %L, %L)', (select id from iscrizioni where bambino_id = :sofia and stato = 'approvata'), :blu, 'd0000000-0000-4000-8000-000000000202'), 'un genitore non sposta di fermata');
+select come(:admin);
+select deve_fallire(format('select sposta_iscrizione(%L, %L, %L)', (select id from iscrizioni where bambino_id = :sofia and stato = 'approvata'), :blu, 'd0000000-0000-4000-8000-000000000205'), 'l''arrivo non è una fermata di salita');
+select deve_fallire(format('select sposta_iscrizione(%L, %L, %L)', (select id from iscrizioni where bambino_id = :sofia and stato = 'approvata'), :verde, 'd0000000-0000-4000-8000-000000000202'), 'fermata di un''altra linea non passa');
+select sposta_iscrizione((select id from iscrizioni where bambino_id = :sofia and stato = 'approvata'), :verde, 'd0000000-0000-4000-8000-000000000104', '2026-10-27 20:00+01');
+select verifica((select linea_id = :verde and fermata_id = 'd0000000-0000-4000-8000-000000000104' from iscrizioni where bambino_id = :sofia and stato = 'approvata'), 'Sofia spostata sulla Verde, fermata 4');
+select come(:giulia);
+select verifica(titoli_avvisi(:giulia) like '%Sofia cambia fermata%', 'Giulia avvisata del cambio: ' || titoli_avvisi(:giulia));
+select verifica((select count(*) from stato_mie_linee('2026-10-28')) = 1, 'ora Giulia vede solo la Verde');
+select come(:admin);
+select sposta_iscrizione((select id from iscrizioni where bambino_id = :sofia and stato = 'approvata'), :blu, 'd0000000-0000-4000-8000-000000000203', '2026-10-27 20:05+01');
+select verifica((select fermata_id = 'd0000000-0000-4000-8000-000000000203' from iscrizioni where bambino_id = :sofia and stato = 'approvata'), 'e riportata sulla Blu');
+-- Amministratori: l'elenco delle persone registrate, la nomina, la revoca, mai l'ultimo.
+select verifica((select count(*) from persone_scuola(:scuola)) >= 20, 'l''admin vede le persone registrate');
+select come(:giulia);
+select verifica((select count(*) from persone_scuola(:scuola)) = 0, 'un genitore non vede l''elenco');
+select come(:admin);
+select revoca_admin(:nuovo, :scuola, '2026-10-27 20:09+01');   -- Rita, nominata nel blocco della registrazione
+select verifica((select count(*) from ruoli where scuola_id = :scuola and ruolo = 'admin' and stato = 'approvata') = 1, 'Rita revocata: resta un admin');
+select deve_fallire(format('select revoca_admin(%L, %L)', :admin, :scuola), 'l''ultimo admin non si revoca');
+select nomina_admin(:anna, :scuola, '2026-10-27 20:10+01');
+select verifica((select count(*) from ruoli where scuola_id = :scuola and ruolo = 'admin' and stato = 'approvata') = 2, 'Anna nominata: due admin');
+select revoca_admin(:admin, :scuola, '2026-10-27 20:11+01');
+select verifica(not is_admin(:scuola), 'il primo admin si è revocato da solo (ce n''era un''altra)');
+select come(:anna);
+select verifica(is_admin(:scuola), 'Anna è admin');
+select nomina_admin(:admin, :scuola, '2026-10-27 20:12+01');
+select come(:admin);
+select revoca_admin(:anna, :scuola, '2026-10-27 20:13+01');
+select verifica(titoli_avvisi(:anna) like '%Non sei più amministratore%', 'Anna avvisata della revoca');
+select verifica(is_admin(:scuola) and (select count(*) from ruoli where scuola_id = :scuola and ruolo = 'admin' and stato = 'approvata') = 1, 'si torna a un solo admin, quello di prima');
+reset role;
+
+-- ---------------------------------------------------------------------------
 \echo '  · bozza di novembre: generata, inviata, poi un''eccezione la rende da rivedere'
 -- ---------------------------------------------------------------------------
 set role authenticated;

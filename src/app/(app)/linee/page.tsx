@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { supabaseServer } from "@/lib/supabase/server";
+import { hhmm } from "@/lib/date";
 import { getSessione } from "@/lib/sessione";
 import { H2 } from "@/components/blocchi";
 import { LineaCard } from "./linea-card";
@@ -15,10 +16,17 @@ export default async function LineePage() {
   const [{ data: linee }, { data: fermate }, { data: iscrizioni }, { data: chiusure }] = await Promise.all([
     supabase.from("linee").select("*").order("ora_partenza").order("nome"),
     supabase.from("fermate").select("*").order("ordine"),
-    supabase.from("iscrizioni").select("linea_id, fermata_id").eq("stato", "approvata"),
+    supabase.from("iscrizioni").select("id, bambino_id, linea_id, fermata_id").eq("stato", "approvata"),
     supabase.from("calendario_chiusure").select("giorno, motivo").gte("giorno", new Date().toISOString().slice(0, 10)).order("giorno"),
   ]);
   const scuolaId = s.scuolaId ?? linee?.[0]?.scuola_id ?? "";
+  const idsBambini = (iscrizioni ?? []).map((i) => i.bambino_id);
+  const { data: bambini } = idsBambini.length ? await supabase.from("bambini").select("id, nome, cognome, classe").in("id", idsBambini) : { data: [] };
+  // Dove si può spostare un bambino: linee attive e le loro fermate di salita.
+  const destinazioni = (linee ?? []).filter((l) => l.attiva).map((l) => ({
+    id: l.id, nome: l.nome,
+    fermate: (fermate ?? []).filter((f) => f.linea_id === l.id && !f.arrivo).map((f) => ({ id: f.id, label: `${f.ordine}. ${f.nome} (${hhmm(f.orario)})` })),
+  }));
 
   return (
     <div className="flex flex-col gap-3.5">
@@ -30,9 +38,13 @@ export default async function LineePage() {
       {(linee ?? []).map((l) => {
         const st = (fermate ?? []).filter((f) => f.linea_id === l.id);
         const isc = (iscrizioni ?? []).filter((i) => i.linea_id === l.id);
-        const perFermata: Record<string, number> = {};
-        for (const i of isc) if (i.fermata_id) perFermata[i.fermata_id] = (perFermata[i.fermata_id] ?? 0) + 1;
-        return <LineaCard key={l.id} scuolaId={l.scuola_id} linea={l} fermate={st} iscrittiPerFermata={perFermata} iscritti={isc.length} />;
+        const perFermata: Record<string, { iscrizioneId: string; nome: string; classe: string }[]> = {};
+        for (const i of isc) {
+          if (!i.fermata_id) continue;
+          const b = bambini?.find((x) => x.id === i.bambino_id);
+          (perFermata[i.fermata_id] ??= []).push({ iscrizioneId: i.id, nome: b ? `${b.nome} ${b.cognome}` : "?", classe: b?.classe ?? "" });
+        }
+        return <LineaCard key={l.id} scuolaId={l.scuola_id} linea={l} fermate={st} bambiniPerFermata={perFermata} iscritti={isc.length} destinazioni={destinazioni} />;
       })}
       <div className="flex flex-col gap-2">
         <H2>Giorni senza pedibus</H2>

@@ -148,6 +148,9 @@ export type Database = {
       sposta_fermata: { Args: { p_id: string; p_su: boolean }; Returns: undefined };
       salva_chiusura: { Args: { p_scuola: string; p_giorno: string; p_motivo: string }; Returns: undefined };
       elimina_chiusura: { Args: { p_scuola: string; p_giorno: string }; Returns: undefined };
+      sposta_iscrizione: { Args: { p_iscrizione: string; p_linea: string; p_fermata: string }; Returns: undefined };
+      revoca_admin: { Args: { p_persona: string; p_scuola: string }; Returns: undefined };
+      persone_scuola: { Args: { p_scuola: string }; Returns: { id: string; nome: string; cognome: string; telefono: string | null; ruoli: string[] }[] };
       decidi_ruolo: { Args: { p_persona: string; p_scuola: string; p_ruolo: RuoloTipo; p_stato: StatoApprovazione; p_note?: string | null }; Returns: undefined };
       imposta_disponibilita: { Args: { p_giorni: number[] }; Returns: undefined };
       segna_eccezione: { Args: { p_giorno: string; p_tipo: TipoEccezione | null }; Returns: string };

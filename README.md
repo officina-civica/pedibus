@@ -40,6 +40,7 @@ supabase/
     20261027001000_sms_solo_otp.sql   interruttori SMS (sms_avvisi, sms_ripiego) + canali(), imposta_canale()
     20261027001100_registrazione.sql  registrati(), nomina_admin(); fermata facoltativa, assegnata dall'admin in decidi_iscrizione()
     20261027001200_linee_admin.sql    salva_linea(), sospendi_linea(), fermate (salva, sposta, elimina), chiusure: la gestione dall'app
+    20261027001300_sposta_e_admin.sql sposta_iscrizione() (bambino di fermata/linea, genitore avvisato), revoca_admin(), persone_scuola()
   functions/invia-avvisi/index.ts     la Edge Function che svuota la coda: Web Push (+ SMS Twilio se acceso)
   seed.sql                            il "martedì a Vedano" del prototipo (solo sviluppo)
 prototipo/index.html                  il prototipo interattivo (demo con regia + mappa delle schermate)
@@ -147,7 +148,8 @@ consenso e crea i ruoli richiesti **in attesa**: il genitore viene approvato ins
 alterna dalla barra in alto. Finché nessun ruolo è approvato si vede `/in-attesa`, con lo stato di ciascuno.
 
 L'**amministratore non si registra**: il primo si nomina a mano nel database (vedi "Avvio in produzione"), gli altri
-con `nomina_admin()` da parte di un admin, tra le persone già registrate.
+li nomina (e revoca) un admin dal proprio Profilo, sezione "Amministratori", tra le persone già registrate
+(`nomina_admin()` / `revoca_admin()`; non si revoca mai l'ultimo).
 
 L'**iscrizione** di un bambino può arrivare **senza fermata** ("la decidiamo col comitato"): resta in attesa e
 l'amministratore sceglie linea e fermata nella riga di approvazione, in Iscrizioni. Un'iscrizione approvata ha
@@ -187,7 +189,9 @@ la prima e l'ultima fermata e seguono gli orari della linea; una fermata con bam
 Il percorso è coperto da `npm run e2e:linee`.
 
 Il backup del genitore si aggiunge dal Profilo per numero di telefono (deve essere entrato nell'app una volta).
-Non ancora: inserimento manuale di chi non usa l'app, nomina di altri admin dall'app.
+Dalla pagina Linee, toccando il numero di bambini di una fermata, l'admin vede chi ci sale e può **spostarlo**
+di fermata o di linea (`sposta_iscrizione()`, il genitore riceve un avviso).
+Non ancora: inserimento manuale di chi non usa l'app.
 
 Scelte da sapere: le pagine sono tutte dinamiche (`cacheComponents` spento: dati per utente ovunque); i dati
 passano da Supabase con la RLS dell'utente, le regole dalle RPC; la lettura dei conteggi di linea è una funzione
@@ -278,5 +282,5 @@ ordine, orario, capolinea, arrivo) e il primo amministratore, scelto per telefon
 
 1. Script dei dati di base in produzione (linee e fermate vere, informativa) e primo admin.
 2. Giro di prova dal telefono sull'indirizzo definitivo: codice SMS, PWA sulla Home, push, passkey.
-3. Inserimento manuale di chi non usa l'app; nomina di altri admin dall'app; spostare un bambino di fermata.
+3. Inserimento manuale di chi non usa l'app.
 4. L'algoritmo a vincoli vero per la bozza mensile, con il confronto "cosa cambia" alla rigenerazione.

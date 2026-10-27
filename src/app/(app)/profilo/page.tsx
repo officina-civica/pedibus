@@ -14,6 +14,7 @@ import { Passkey } from "./passkey";
 import { Disponibilita } from "./disponibilita";
 import { Backup } from "./backup";
 import { Canali } from "./canali";
+import { Amministratori } from "./amministratori";
 import { getCanali } from "@/lib/canali";
 import { BriefcaseMedical } from "lucide-react";
 import { oggiRome } from "@/lib/date";
@@ -52,6 +53,8 @@ export default async function ProfiloPage() {
 
   const nome = nomeCompleto(s.persona);
   const ruoliTesto = s.ruoli.map((r) => RUOLO[r.ruolo]).join(", ");
+  const admin = s.ruoli.some((r) => r.ruolo === "admin");
+  const { data: personeScuola } = admin && s.scuolaId ? await supabase.rpc("persone_scuola", { p_scuola: s.scuolaId }) : { data: [] };
 
   return (
     <div className="flex flex-col gap-3.5">
@@ -68,11 +71,17 @@ export default async function ProfiloPage() {
         <Notifiche abbonamenti={abbonamenti ?? []} vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""} canali={canali} />
       </div>
 
-      {s.ruoli.some((r) => r.ruolo === "admin") && (
-        <div className="flex flex-col gap-2">
-          <H2>Canali di notifica</H2>
-          <Canali canali={canali} />
-        </div>
+      {admin && (
+        <>
+          <div className="flex flex-col gap-2">
+            <H2>Canali di notifica</H2>
+            <Canali canali={canali} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <H2>Amministratori</H2>
+            <Amministratori scuolaId={s.scuolaId!} io={s.userId} persone={personeScuola ?? []} />
+          </div>
+        </>
       )}
 
       <div className="flex flex-col gap-2">

@@ -99,3 +99,23 @@ export async function eliminaChiusura(scuolaId: string, giorno: string): Promise
   const { error } = await supabase.rpc("elimina_chiusura", { p_scuola: scuolaId, p_giorno: giorno });
   return esito(error, "Giorno tolto dal calendario.", ["/linee", "/turni"]);
 }
+
+/* Spostare un bambino di fermata (anche di linea): il genitore viene avvisato. */
+export async function spostaIscrizione(iscrizioneId: string, lineaId: string, fermataId: string): Promise<Esito> {
+  const supabase = await supabaseServer();
+  const { error } = await supabase.rpc("sposta_iscrizione", { p_iscrizione: iscrizioneId, p_linea: lineaId, p_fermata: fermataId });
+  return esito(error, "Fermata cambiata: il genitore è stato avvisato.", ["/linee", "/iscrizioni", "/oggi", "/presenze"]);
+}
+
+/* Amministratori: nomina e revoca (mai l'ultimo). */
+export async function nominaAdmin(personaId: string, scuolaId: string): Promise<Esito> {
+  const supabase = await supabaseServer();
+  const { error } = await supabase.rpc("nomina_admin", { p_persona: personaId, p_scuola: scuolaId });
+  return esito(error, "Nominato amministratore: riceve un avviso.", ["/profilo"]);
+}
+
+export async function revocaAdmin(personaId: string, scuolaId: string): Promise<Esito> {
+  const supabase = await supabaseServer();
+  const { error } = await supabase.rpc("revoca_admin", { p_persona: personaId, p_scuola: scuolaId });
+  return esito(error, "Ruolo di amministratore revocato.", ["/profilo", "/"]);
+}

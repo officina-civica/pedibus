@@ -96,6 +96,39 @@ const attendi = (p, re) => p.getByText(re).first().waitFor({ timeout: 10000 });
   await attendi(p, /Giorno tolto/); await p.waitForTimeout(600);
   ok((await p.getByText("Ponte dei Santi").count()) === 0, "chiusura tolta");
 
+  console.log("Admin · sposta Sofia di fermata");
+  await p.goto(APP + "/linee");
+  const bluCard = p.locator("[data-linea='Linea Blu']");
+  await bluCard.getByRole("button", { name: "Bambini alla fermata Via Garibaldi, bar" }).click();
+  ok(await p.getByText("Sofia Bianchi").isVisible(), "vede i bambini della fermata 3 della Blu");
+  await shot(p, "l5-bambini-fermata");
+  const rigaSofia = p.getByRole("dialog").locator("div", { hasText: "Sofia Bianchi" }).filter({ has: p.getByRole("button", { name: "Sposta" }) }).last();
+  await rigaSofia.getByRole("button", { name: "Sposta" }).click();
+  await p.getByLabel("Fermata di destinazione").selectOption({ index: 1 });   // la prima fermata diversa: 1. Via Battisti
+  await p.getByRole("button", { name: "Conferma" }).click();
+  await attendi(p, /Fermata cambiata/); await p.waitForTimeout(800);
+  await entra(context, GIULIA);
+  await p.goto(APP + "/presenze");
+  ok(await p.getByText(/Linea Blu, fermata 1/).isVisible(), "Giulia vede Sofia alla fermata 1");
+  await p.goto(APP + "/avvisi");
+  ok(await p.getByText("Sofia cambia fermata").first().isVisible(), "e ha l'avviso del cambio");
+
+  console.log("Admin · nomina e revoca un amministratore");
+  await entra(context, ADMIN);
+  await p.goto(APP + "/profilo");
+  ok(await p.getByText("Amministratori").isVisible(), "sezione Amministratori nel profilo admin");
+  ok(await p.getByRole("button", { name: /Revoca Officina Civica/ }).isDisabled(), "l'unico admin non si può revocare");
+  await p.getByRole("button", { name: "Nomina un amministratore" }).click();
+  await p.getByLabel("Persona").selectOption({ value: "a0000000-0000-4000-8000-000000000003" });   // Marta Rossi
+  await p.getByRole("button", { name: "Nomina", exact: true }).click();
+  await attendi(p, /Nominato amministratore/); await p.waitForTimeout(800);
+  ok(await p.getByText("Marta Rossi").isVisible(), "Marta è tra gli admin");
+  await shot(p, "l6-amministratori");
+  await p.getByRole("button", { name: "Revoca Marta Rossi" }).click();
+  await p.getByRole("button", { name: "Revoca", exact: true }).click();
+  await attendi(p, /revocato/); await p.waitForTimeout(800);
+  ok((await p.getByText("Marta Rossi").count()) === 0, "Marta revocata");
+
   console.log(`\nerrori di pagina: ${errori.length ? errori.join(" | ") : "nessuno"}`);
   console.log(fallite ? `✗ ${fallite} verifiche fallite` : "✔ tutto verde");
   await browser.close();

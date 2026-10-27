@@ -6,7 +6,8 @@ import { ArrowDown, ArrowUp, Flag, Pause, Pencil, Play, Plus, Trash2 } from "luc
 import { toast } from "sonner";
 import type { Fermata, Linea } from "@/lib/database.types";
 import { hhmm } from "@/lib/date";
-import { eliminaFermata, salvaFermata, sospendiLinea, spostaFermata } from "@/app/(app)/azioni-admin";
+import { eliminaFermata, salvaFermata, sospendiLinea, spostaFermata, spostaIscrizione } from "@/app/(app)/azioni-admin";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,10 +19,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { H2 } from "@/components/blocchi";
 import { LineaDialog } from "./linea-dialog";
 
-type Props = { scuolaId: string; linea: Linea; fermate: Fermata[]; iscrittiPerFermata: Record<string, number>; iscritti: number };
+type BambinoAllaFermata = { iscrizioneId: string; nome: string; classe: string };
+type Destinazione = { id: string; nome: string; fermate: { id: string; label: string }[] };
+type Props = { scuolaId: string; linea: Linea; fermate: Fermata[]; bambiniPerFermata: Record<string, BambinoAllaFermata[]>; iscritti: number; destinazioni: Destinazione[] };
 
 /* La scheda di una linea, come la vede l'amministratore: si modifica, si sospende, si lavora sulle fermate. */
-export function LineaCard({ scuolaId, linea: l, fermate: st, iscrittiPerFermata, iscritti }: Props) {
+export function LineaCard({ scuolaId, linea: l, fermate: st, bambiniPerFermata, iscritti, destinazioni }: Props) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [modifica, setModifica] = useState(false);
@@ -29,6 +32,7 @@ export function LineaCard({ scuolaId, linea: l, fermate: st, iscrittiPerFermata,
   const [motivo, setMotivo] = useState("");
   const [fermata, setFermata] = useState<{ aperta: boolean; f?: Fermata }>({ aperta: false });
   const [daEliminare, setDaEliminare] = useState<Fermata | null>(null);
+  const [bambiniDi, setBambiniDi] = useState<Fermata | null>(null);
 
   const esegui = (fn: () => Promise<{ ok: boolean; messaggio: string }>) => start(async () => { const r = await fn(); toast(r.messaggio); router.refresh(); });
   const ultimaSalita = [...st].reverse().find((f) => !f.arrivo);
@@ -50,7 +54,12 @@ export function LineaCard({ scuolaId, linea: l, fermate: st, iscrittiPerFermata,
           <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${f.arrivo ? "bg-brand text-brand-foreground" : "bg-primary text-primary-foreground"}`}>{f.arrivo ? <Flag size={12} strokeWidth={3} /> : f.ordine}</span>
           <span className="min-w-0 flex-1 text-sm font-medium leading-tight">{f.nome}{f.capolinea ? <span className="font-normal text-muted-foreground"> · capolinea</span> : f.arrivo ? <span className="font-normal text-muted-foreground"> · arrivo</span> : null}</span>
           <span className="tabular-nums text-[13px] text-muted-foreground">{hhmm(f.orario)}</span>
-          {!f.arrivo && <span className="min-w-6 rounded-full bg-muted px-2 py-0.5 text-center text-[11px] font-semibold">{iscrittiPerFermata[f.id] || ""}</span>}
+          {!f.arrivo && (
+            <button type="button" aria-label={`Bambini alla fermata ${f.nome}`} disabled={!(bambiniPerFermata[f.id]?.length)} onClick={() => setBambiniDi(f)}
+              className="min-w-6 rounded-full bg-muted px-2 py-0.5 text-center text-[11px] font-semibold enabled:hover:bg-brand/10 enabled:hover:text-brand disabled:cursor-default">
+              {bambiniPerFermata[f.id]?.length || ""}
+            </button>
+          )}
           <span className="flex items-center">
             <Button variant="ghost" size="icon-sm" aria-label={`Sposta su ${f.nome}`} disabled={pending || f.capolinea || f.arrivo || f.ordine <= 2} onClick={() => esegui(() => spostaFermata(f.id, true))}><ArrowUp /></Button>
             <Button variant="ghost" size="icon-sm" aria-label={`Sposta giù ${f.nome}`} disabled={pending || f.capolinea || f.arrivo || f.ordine >= st.length - 1} onClick={() => esegui(() => spostaFermata(f.id, false))}><ArrowDown /></Button>
@@ -75,6 +84,7 @@ export function LineaCard({ scuolaId, linea: l, fermate: st, iscrittiPerFermata,
       </div>
 
       {modifica && <LineaDialog scuolaId={scuolaId} linea={l} open={modifica} onOpenChange={setModifica} />}
+      {bambiniDi && <BambiniFermataDialog linea={l} fermata={bambiniDi} bambini={bambiniPerFermata[bambiniDi.id] ?? []} destinazioni={destinazioni} open onOpenChange={(v) => { if (!v) setBambiniDi(null); }} />}
       {fermata.aperta && <FermataDialog lineaId={l.id} fermata={fermata.f} dopoId={ultimaSalita?.id} open={fermata.aperta} onOpenChange={(v) => setFermata({ aperta: v })} />}
 
       <AlertDialog open={sospensione} onOpenChange={setSospensione}>
@@ -158,6 +168,57 @@ function FermataDialog({ lineaId, fermata, dopoId, open, onOpenChange }: { linea
             <Button type="submit" disabled={pending}>{pending ? "Salvo…" : fermata ? "Salva" : "Aggiungi"}</Button>
           </DialogFooter>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* I bambini iscritti a una fermata: da qui si spostano, su un'altra fermata o un'altra linea. */
+function BambiniFermataDialog({ linea, fermata, bambini, destinazioni, open, onOpenChange }: { linea: Linea; fermata: Fermata; bambini: BambinoAllaFermata[]; destinazioni: Destinazione[]; open: boolean; onOpenChange: (v: boolean) => void }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [inSpostamento, setInSpostamento] = useState<string | null>(null);
+  const [dest, setDest] = useState<{ linea: string; fermata: string }>({ linea: linea.id, fermata: "" });
+  const fermateDest = destinazioni.find((d) => d.id === dest.linea)?.fermate.filter((f) => f.id !== fermata.id) ?? [];
+
+  const sposta = (iscrizioneId: string) => start(async () => {
+    const r = await spostaIscrizione(iscrizioneId, dest.linea, dest.fermata);
+    toast(r.messaggio);
+    if (r.ok) { setInSpostamento(null); router.refresh(); }
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Fermata {fermata.ordine}, {fermata.nome}</DialogTitle>
+          <DialogDescription>{bambini.length} {bambini.length === 1 ? "bambino iscritto" : "bambini iscritti"} · {linea.nome}. Spostandone uno, il genitore riceve un avviso.</DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col divide-y">
+          {bambini.map((b) => (
+            <div key={b.iscrizioneId} className="flex flex-col gap-2 py-2.5">
+              <div className="flex items-center gap-3">
+                <span className="min-w-0 flex-1"><span className="block text-sm font-semibold">{b.nome}</span><span className="text-[13px] text-muted-foreground">{b.classe}</span></span>
+                {inSpostamento === b.iscrizioneId
+                  ? <Button variant="ghost" size="sm" onClick={() => setInSpostamento(null)}>Annulla</Button>
+                  : <Button variant="outline" size="sm" onClick={() => { setInSpostamento(b.iscrizioneId); setDest({ linea: linea.id, fermata: "" }); }}>Sposta</Button>}
+              </div>
+              {inSpostamento === b.iscrizioneId && (
+                <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
+                  <NativeSelect aria-label="Linea di destinazione" size="sm" className="w-full" value={dest.linea} onChange={(e) => setDest({ linea: e.target.value, fermata: "" })}>
+                    {destinazioni.map((d) => <NativeSelectOption key={d.id} value={d.id}>{d.nome}</NativeSelectOption>)}
+                  </NativeSelect>
+                  <NativeSelect aria-label="Fermata di destinazione" size="sm" className="w-full" value={dest.fermata} onChange={(e) => setDest({ ...dest, fermata: e.target.value })}>
+                    <NativeSelectOption value="">Fermata…</NativeSelectOption>
+                    {fermateDest.map((f) => <NativeSelectOption key={f.id} value={f.id}>{f.label}</NativeSelectOption>)}
+                  </NativeSelect>
+                  <Button size="sm" disabled={pending || !dest.fermata} onClick={() => sposta(b.iscrizioneId)}>Conferma</Button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        <DialogFooter><Button variant="outline" onClick={() => onOpenChange(false)}>Chiudi</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
