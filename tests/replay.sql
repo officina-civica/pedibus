@@ -366,6 +366,57 @@ select verifica(titoli_avvisi(:nuovo) like '%Sei amministratore del pedibus%', '
 reset role;
 
 -- ---------------------------------------------------------------------------
+\echo '  · linee e fermate dall''app: nuova linea, fermate, sospensione'
+-- ---------------------------------------------------------------------------
+set role authenticated;
+select come(:giulia);
+select deve_fallire(format('select salva_linea(%L, %L, %L, %L, %L, 4, 2, 3, %L, %L)', :scuola, 'Linea Gialla', '#ca8a04', '07:40', '08:00', '18:00', '21:00'), 'un genitore non crea linee');
+select come(:admin);
+select deve_fallire(format('select salva_linea(%L, %L, %L, %L, %L, 4, 2, 3, %L, %L)', :scuola, 'Linea Gialla', '#ca8a04', '08:10', '08:00', '18:00', '21:00'), 'arrivo prima della partenza non passa');
+select salva_linea(:scuola, 'Linea Gialla', '#ca8a04', '07:40', '08:00', 4, 2, 3, '18:00', '21:00') as gialla \gset
+select verifica((select count(*) from fermate where linea_id = :'gialla') = 2 and (select bool_and(capolinea or arrivo) from fermate where linea_id = :'gialla'), 'la linea nasce con capolinea e arrivo');
+select salva_fermata(:'gialla', 'Via Lambro', '07:46') as f1 \gset
+select salva_fermata(:'gialla', 'Piazza Mercato', '07:52', null, :'f1') as f2 \gset
+select verifica((select string_agg(nome, ' > ' order by ordine) from fermate where linea_id = :'gialla') = 'Capolinea > Via Lambro > Piazza Mercato > Scuola primaria', 'fermate in ordine: ' || (select string_agg(nome, ' > ' order by ordine) from fermate where linea_id = :'gialla'));
+select sposta_fermata(:'f2', true);
+select verifica((select string_agg(nome, ' > ' order by ordine) from fermate where linea_id = :'gialla') = 'Capolinea > Piazza Mercato > Via Lambro > Scuola primaria', 'sposta su');
+select verifica((select ordine from fermate where id = :'f2') = 2 and (select capolinea from fermate where linea_id = :'gialla' and ordine = 1), 'rinumerate, capolinea resta il primo');
+select salva_fermata(:'gialla', 'Via Lambro, 10', '07:50', :'f1');
+select verifica((select nome || ' ' || orario::text from fermate where id = :'f1') = 'Via Lambro, 10 07:50:00', 'fermata rinominata');
+select deve_fallire(format('select elimina_fermata(%L)', (select id from fermate where linea_id = :'gialla' and capolinea)), 'il capolinea non si elimina');
+select deve_fallire(format('select elimina_fermata(%L)', 'd0000000-0000-4000-8000-000000000103'), 'una fermata con iscritti non si elimina');
+select elimina_fermata(:'f2');
+select verifica((select count(*) from fermate where linea_id = :'gialla') = 3, 'fermata eliminata e rinumerate');
+select salva_linea(:scuola, 'Linea Gialla', '#ca8a04', '07:35', '08:05', 5, 2, 3, '18:00', '21:00', :'gialla');
+select verifica((select orario from fermate where linea_id = :'gialla' and capolinea) = '07:35' and (select orario from fermate where linea_id = :'gialla' and arrivo) = '08:05' and (select soglia_bambini from linee where id = :'gialla') = 5, 'modifica linea: orari di capolinea e arrivo seguono');
+-- Sospensione della Blu: i turni futuri si annullano, famiglie e volontari avvisati; le iscrizioni restano.
+reset role;
+insert into turni (linea_id, giorno) values (:blu, '2026-10-29');   -- un turno futuro, come dopo una bozza pubblicata
+set role authenticated;
+select come(:admin);
+select sospendi_linea(:blu, false, 'Lavori stradali in via Battisti', '2026-10-27 19:30+01') as annullati \gset
+select verifica(:annullati >= 1 and (select count(*) from turni where linea_id = :blu and giorno >= '2026-10-28' and stato <> 'annullato_definitivo') = 0, 'turni futuri della Blu annullati: ' || :annullati);
+select verifica((select not attiva from linee where id = :blu), 'Blu sospesa');
+select verifica((select count(*) from iscrizioni where linea_id = :blu and stato = 'approvata') > 0, 'le iscrizioni della Blu restano');
+select verifica(sospendi_linea(:blu, false) = 0, 'sospendere due volte non fa nulla');
+select come(:karimi);
+select verifica(titoli_avvisi(:karimi) like '%Linea Blu sospesa%', 'Karimi (genitore sulla Blu) avvisato: ' || titoli_avvisi(:karimi));
+select deve_fallire(format('select sospendi_linea(%L, true)', :blu), 'un genitore non riattiva');
+select come(:admin);
+select sospendi_linea(:blu, true, 'Lavori finiti', '2026-10-27 19:40+01');
+select verifica((select attiva from linee where id = :blu), 'Blu riattivata');
+select come(:karimi);
+select verifica(titoli_avvisi(:karimi) like '%Linea Blu riparte%', 'Karimi avvisato della ripartenza');
+select come(:admin);
+select salva_chiusura(:scuola, '2026-11-02', 'Ponte dei Santi');
+select verifica((select motivo from calendario_chiusure where giorno = '2026-11-02') = 'Ponte dei Santi', 'chiusura aggiunta');
+select elimina_chiusura(:scuola, '2026-11-02');
+select verifica(not exists (select 1 from calendario_chiusure where giorno = '2026-11-02'), 'chiusura tolta');
+-- La Gialla era di prova: sospesa, la bozza di novembre non la considera.
+select verifica(sospendi_linea(:'gialla', false, 'Linea di prova') = 0, 'sospendere una linea senza turni non annulla nulla');
+reset role;
+
+-- ---------------------------------------------------------------------------
 \echo '  · bozza di novembre: generata, inviata, poi un''eccezione la rende da rivedere'
 -- ---------------------------------------------------------------------------
 set role authenticated;
@@ -402,8 +453,8 @@ select verifica(not exists (select 1 from turni_volontari tv join turni t on t.i
 -- ---------------------------------------------------------------------------
 set role anon;
 select set_config('request.jwt.claims', '', false);
-select verifica((select count(*) from linee) = 2, 'anon vede le linee');
-select verifica((select count(*) from fermate) = 11, 'anon vede le fermate');
+select verifica((select count(*) from linee) = 3, 'anon vede le linee (Verde, Blu e la Gialla di prova)');
+select verifica((select count(*) from fermate) = 14, 'anon vede le fermate');
 select verifica((select count(*) from bambini) = 0, 'anon non vede bambini');
 select verifica((select count(*) from persone) = 0, 'anon non vede persone');
 select verifica((select count(*) from avvisi) = 0, 'anon non vede avvisi');

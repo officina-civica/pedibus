@@ -39,6 +39,7 @@ supabase/
     20261027000900_deleghe_app.sql    aggiungi_delega(telefono): il backup del genitore dall'app
     20261027001000_sms_solo_otp.sql   interruttori SMS (sms_avvisi, sms_ripiego) + canali(), imposta_canale()
     20261027001100_registrazione.sql  registrati(), nomina_admin(); fermata facoltativa, assegnata dall'admin in decidi_iscrizione()
+    20261027001200_linee_admin.sql    salva_linea(), sospendi_linea(), fermate (salva, sposta, elimina), chiusure: la gestione dall'app
   functions/invia-avvisi/index.ts     la Edge Function che svuota la coda: Web Push (+ SMS Twilio se acceso)
   seed.sql                            il "martedì a Vedano" del prototipo (solo sviluppo)
 prototipo/index.html                  il prototipo interattivo (demo con regia + mappa delle schermate)
@@ -175,12 +176,18 @@ Fatto, per tutti e tre i ruoli, con le schermate del prototipo:
   in lista solo se iscritto, «Prossima fermata», consegna, contatti d'emergenza con consultazione registrata),
   Profilo (settimana tipo, **eccezioni per data** sul calendario del mese prossimo, dotazioni).
 - **Amministratore**: Oggi (alert per linea, iscrizioni in attesa, presenti, turni con copertura e kit), Iscrizioni
-  (approva/rifiuta iscrizioni e richieste da volontario, con motivo), Linee (fermate, bambini per fermata, soglie,
-  chiusure; in sola lettura), Turni (team del giorno, bozza del mese: genera, invia, pubblica, rigenera se "da rivedere").
+  (approva/rifiuta iscrizioni e richieste da volontario, con motivo; assegna linea e fermata a chi non l'ha scelta),
+  Linee (nuova linea, modifica di orari e soglie, fermate da aggiungere, spostare, rinominare, eliminare; **sospensione
+  e riattivazione** con avviso alle famiglie; giorni senza pedibus), Turni (team del giorno, bozza del mese: genera,
+  invia, pubblica, rigenera se "da rivedere").
+
+Sospendere una linea (`sospendi_linea`) annulla i turni già programmati da oggi in poi e avvisa famiglie e volontari;
+le iscrizioni restano. Riattivarla avvisa le famiglie; i turni tornano con la prossima bozza. Capolinea e arrivo sono
+la prima e l'ultima fermata e seguono gli orari della linea; una fermata con bambini iscritti non si elimina.
+Il percorso è coperto da `npm run e2e:linee`.
 
 Il backup del genitore si aggiunge dal Profilo per numero di telefono (deve essere entrato nell'app una volta).
-Non ancora: modifica di linee e fermate dall'app, inserimento manuale di chi non usa l'app, calendario delle
-chiusure modificabile.
+Non ancora: inserimento manuale di chi non usa l'app, nomina di altri admin dall'app.
 
 Scelte da sapere: le pagine sono tutte dinamiche (`cacheComponents` spento: dati per utente ovunque); i dati
 passano da Supabase con la RLS dell'utente, le regole dalle RPC; la lettura dei conteggi di linea è una funzione
@@ -271,5 +278,5 @@ ordine, orario, capolinea, arrivo) e il primo amministratore, scelto per telefon
 
 1. Script dei dati di base in produzione (linee e fermate vere, informativa) e primo admin.
 2. Giro di prova dal telefono sull'indirizzo definitivo: codice SMS, PWA sulla Home, push, passkey.
-3. Modifica linee, fermate e chiusure dall'app; inserimento manuale di chi non usa l'app; nomina admin dall'app.
+3. Inserimento manuale di chi non usa l'app; nomina di altri admin dall'app; spostare un bambino di fermata.
 4. L'algoritmo a vincoli vero per la bozza mensile, con il confronto "cosa cambia" alla rigenerazione.

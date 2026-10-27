@@ -141,6 +141,13 @@ export type Database = {
       decidi_iscrizione: { Args: { p_iscrizione: string; p_stato: StatoApprovazione; p_motivo?: string | null; p_linea?: string | null; p_fermata?: string | null }; Returns: undefined };
       registrati: { Args: { p_nome: string; p_cognome: string; p_scuola: string; p_ruoli: RuoloTipo[]; p_informativa: string }; Returns: undefined };
       nomina_admin: { Args: { p_persona: string; p_scuola: string }; Returns: undefined };
+      salva_linea: { Args: { p_scuola: string; p_nome: string; p_colore: string; p_ora_partenza: string; p_ora_arrivo: string; p_soglia_bambini: number; p_min_volontari: number; p_volontari_consigliati: number; p_ora_chiusura_assenze: string; p_ora_soglia_definitiva: string; p_id?: string | null }; Returns: string };
+      sospendi_linea: { Args: { p_linea: string; p_attiva: boolean; p_motivo?: string | null }; Returns: number };
+      salva_fermata: { Args: { p_linea: string; p_nome: string; p_orario: string; p_id?: string | null; p_dopo?: string | null }; Returns: string };
+      elimina_fermata: { Args: { p_id: string }; Returns: undefined };
+      sposta_fermata: { Args: { p_id: string; p_su: boolean }; Returns: undefined };
+      salva_chiusura: { Args: { p_scuola: string; p_giorno: string; p_motivo: string }; Returns: undefined };
+      elimina_chiusura: { Args: { p_scuola: string; p_giorno: string }; Returns: undefined };
       decidi_ruolo: { Args: { p_persona: string; p_scuola: string; p_ruolo: RuoloTipo; p_stato: StatoApprovazione; p_note?: string | null }; Returns: undefined };
       imposta_disponibilita: { Args: { p_giorni: number[] }; Returns: undefined };
       segna_eccezione: { Args: { p_giorno: string; p_tipo: TipoEccezione | null }; Returns: string };
