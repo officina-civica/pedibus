@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { Fingerprint, ShieldCheck } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input, Field } from "@/components/ui/input";
-import { Alert } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 /* Numero italiano scritto come capita → E.164 (+39…). */
 export function normalizzaTelefono(raw: string): string | null {
@@ -78,11 +79,11 @@ export function AccessoForm() {
     <div className="mt-6 flex w-full flex-col gap-3.5">
       {passkeyOk && (
         <>
-          <Button variant="primary" size="lg" block onClick={conPasskey} disabled={pending}>
+          <Button size="lg" className="w-full" onClick={conPasskey} disabled={pending}>
             <Fingerprint size={22} /> Entra con la passkey
           </Button>
-          <p className="text-center text-[13px] text-muted">Usa lo sblocco del telefono: impronta o Face ID. Niente password da ricordare.</p>
-          <div className="flex items-center gap-3 text-xs font-medium uppercase tracking-[.06em] text-muted">
+          <p className="text-center text-[13px] text-muted-foreground">Usa lo sblocco del telefono: impronta o Face ID. Niente password da ricordare.</p>
+          <div className="flex items-center gap-3 text-xs font-medium uppercase tracking-[.06em] text-muted-foreground">
             <span className="h-px flex-1 bg-border" />oppure<span className="h-px flex-1 bg-border" />
           </div>
         </>
@@ -90,32 +91,36 @@ export function AccessoForm() {
 
       {fase === "telefono" ? (
         <form className="flex flex-col gap-3.5" onSubmit={(e) => { e.preventDefault(); inviaCodice(); }}>
-          <Field label="Numero di cellulare" htmlFor="tel">
+          <Field>
+            <FieldLabel htmlFor="tel">Numero di cellulare</FieldLabel>
             <Input id="tel" type="tel" inputMode="tel" autoComplete="tel" placeholder="+39 3xx xxx xxxx" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
           </Field>
-          <Button type="submit" variant="outline" size="lg" block disabled={pending}>
+          <Button type="submit" variant="outline" size="lg" className="w-full" disabled={pending}>
             {pending ? "Invio in corso…" : "Ricevi un codice via SMS"}
           </Button>
         </form>
       ) : (
         <form className="flex flex-col gap-3.5" onSubmit={(e) => { e.preventDefault(); verificaCodice(); }}>
-          <Alert tone="ok" icon={<ShieldCheck size={16} />} title={`Codice inviato a ${telefono}`}>
-            Arriva via SMS in pochi secondi e vale 5 minuti.
+          <Alert variant="success">
+            <ShieldCheck />
+            <AlertTitle>Codice inviato a {telefono}</AlertTitle>
+            <AlertDescription>Arriva via SMS in pochi secondi e vale 5 minuti.</AlertDescription>
           </Alert>
-          <Field label="Codice a 6 cifre" htmlFor="otp">
+          <Field>
+            <FieldLabel htmlFor="otp">Codice a 6 cifre</FieldLabel>
             <Input id="otp" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]*" maxLength={6} placeholder="••••••" className="text-center text-2xl tracking-[.4em]"
               value={codice} onChange={(e) => setCodice(e.target.value)} autoFocus />
           </Field>
-          <Button type="submit" variant="primary" size="lg" block disabled={pending}>{pending ? "Verifica…" : "Entra"}</Button>
-          <button type="button" className="text-[13px] text-muted underline" onClick={() => { setFase("telefono"); setCodice(""); }}>
+          <Button type="submit" size="lg" className="w-full" disabled={pending}>{pending ? "Verifica…" : "Entra"}</Button>
+          <Button type="button" variant="link" className="text-muted-foreground" onClick={() => { setFase("telefono"); setCodice(""); }}>
             Numero sbagliato? Cambialo
-          </button>
+          </Button>
         </form>
       )}
 
-      {errore && <Alert tone="danger">{errore}</Alert>}
+      {errore && <Alert variant="destructive"><AlertDescription>{errore}</AlertDescription></Alert>}
 
-      <p className="mt-4 text-center text-[13px] text-muted">
+      <p className="mt-4 text-center text-[13px] text-muted-foreground">
         Prima volta qui? L&apos;iscrizione dei bambini si fa dall&apos;app dopo il primo accesso.
       </p>
     </div>

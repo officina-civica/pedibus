@@ -6,9 +6,13 @@ import { Check, Plus, Trash2 } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import type { Informativa } from "@/lib/database.types";
 import { Button } from "@/components/ui/button";
-import { Card, H2 } from "@/components/ui/card";
-import { Field, Input } from "@/components/ui/input";
-import { Alert } from "@/components/ui/alert";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { H2 } from "@/components/blocchi";
 import { hhmm } from "@/lib/date";
 
 type Scuola = { id: string; nome: string };
@@ -64,71 +68,77 @@ export function IscrizioneForm({ persona, scuole, linee, fermate, informativa }:
   if (fatto) {
     return (
       <div className="flex flex-col items-center gap-3.5 px-4 pt-20 text-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-accent-soft text-accent-fg"><Check size={28} /></span>
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={28} /></span>
         <h1 className="text-[22px] font-bold tracking-tight">Iscrizione inviata</h1>
-        <p className="text-sm text-muted">Grazie{persona?.nome ? ` ${persona.nome}` : ""}. L&apos;amministratore la verifica e la approva: riceverai un avviso. Fino ad allora {fatto.length > 1 ? "i bambini non risultano iscritti" : "il bambino non risulta iscritto"}.</p>
-        <Button block onClick={() => { router.replace("/"); router.refresh(); }}>Torna all&apos;app</Button>
+        <p className="text-sm text-muted-foreground">Grazie{persona?.nome ? ` ${persona.nome}` : ""}. L&apos;amministratore la verifica e la approva: riceverai un avviso. Fino ad allora {fatto.length > 1 ? "i bambini non risultano iscritti" : "il bambino non risulta iscritto"}.</p>
+        <Button variant="outline" size="lg" className="w-full" onClick={() => { router.replace("/"); router.refresh(); }}>Torna all&apos;app</Button>
       </div>
     );
   }
 
   return (
     <form className="flex flex-col gap-[18px] px-4 pt-[18px] pb-6" onSubmit={(e) => { e.preventDefault(); invia(); }}>
-      <div><h1 className="text-[22px] font-bold tracking-tight">Iscrivi i tuoi bambini</h1><p className="text-sm text-muted">L&apos;amministratore approva l&apos;iscrizione. Riceverai un avviso.</p></div>
+      <div><h1 className="text-[22px] font-bold tracking-tight">Iscrivi i tuoi bambini</h1><p className="text-sm text-muted-foreground">L&apos;amministratore approva l&apos;iscrizione. Riceverai un avviso.</p></div>
 
       {scuole.length > 1 && (
-        <Field label="Scuola" htmlFor="scuola">
-          <select id="scuola" className="h-12 w-full rounded-md border border-border bg-card px-3 text-base" value={scuola} onChange={(e) => setScuola(e.target.value)}>
-            {scuole.map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}
-          </select>
+        <Field>
+          <FieldLabel htmlFor="scuola">Scuola</FieldLabel>
+          <NativeSelect id="scuola" className="w-full" value={scuola} onChange={(e) => setScuola(e.target.value)}>
+            {scuole.map((s) => <NativeSelectOption key={s.id} value={s.id}>{s.nome}</NativeSelectOption>)}
+          </NativeSelect>
         </Field>
       )}
 
       <div className="flex flex-col gap-2">
         <H2>Genitore principale</H2>
         <div className="grid grid-cols-2 gap-2.5">
-          <Field label="Nome" htmlFor="gnome"><Input id="gnome" value={genNome} onChange={(e) => setGenNome(e.target.value)} required /></Field>
-          <Field label="Cognome" htmlFor="gcognome"><Input id="gcognome" value={genCognome} onChange={(e) => { setGenCognome(e.target.value); if (!cognome) setCognome(e.target.value); }} required /></Field>
+          <Field><FieldLabel htmlFor="gnome">Nome</FieldLabel><Input id="gnome" value={genNome} onChange={(e) => setGenNome(e.target.value)} required /></Field>
+          <Field><FieldLabel htmlFor="gcognome">Cognome</FieldLabel><Input id="gcognome" value={genCognome} onChange={(e) => { setGenCognome(e.target.value); if (!cognome) setCognome(e.target.value); }} required /></Field>
         </div>
-        <p className="text-[13px] text-muted">{persona?.telefono ? `Telefono ${persona.telefono}: ` : ""}il numero con cui sei entrato è quello degli avvisi.</p>
+        <p className="text-[13px] text-muted-foreground">{persona?.telefono ? `Telefono ${persona.telefono}: ` : ""}il numero con cui sei entrato è quello degli avvisi.</p>
       </div>
 
       {bambini.map((b, i) => (
         <div key={i} className="flex flex-col gap-2">
-          <div className="flex items-center justify-between"><H2>{bambini.length > 1 ? `Bambino ${i + 1}` : "Bambino"}</H2>{bambini.length > 1 && <button type="button" className="text-[13px] text-muted" onClick={() => setBambini(bambini.filter((_, j) => j !== i))}><Trash2 size={14} /></button>}</div>
-          <Card>
+          <div className="flex items-center justify-between"><H2>{bambini.length > 1 ? `Bambino ${i + 1}` : "Bambino"}</H2>{bambini.length > 1 && <Button type="button" variant="ghost" size="icon-sm" className="text-muted-foreground" aria-label="Togli questo bambino" onClick={() => setBambini(bambini.filter((_, j) => j !== i))}><Trash2 /></Button>}</div>
+          <Card size="sm" className="px-3">
             <div className="grid grid-cols-2 gap-2.5">
-              <Field label="Nome" htmlFor={`nome${i}`}><Input id={`nome${i}`} value={b.nome} onChange={(e) => setBambini(bambini.map((x, j) => j === i ? { ...x, nome: e.target.value } : x))} required /></Field>
-              <Field label="Cognome" htmlFor={`cognome${i}`}><Input id={`cognome${i}`} value={b.cognome} onChange={(e) => { setCognome(e.target.value); setBambini(bambini.map((x, j) => j === i ? { ...x, cognome: e.target.value } : x)); }} required /></Field>
+              <Field><FieldLabel htmlFor={`nome${i}`}>Nome</FieldLabel><Input id={`nome${i}`} value={b.nome} onChange={(e) => setBambini(bambini.map((x, j) => j === i ? { ...x, nome: e.target.value } : x))} required /></Field>
+              <Field><FieldLabel htmlFor={`cognome${i}`}>Cognome</FieldLabel><Input id={`cognome${i}`} value={b.cognome} onChange={(e) => { setCognome(e.target.value); setBambini(bambini.map((x, j) => j === i ? { ...x, cognome: e.target.value } : x)); }} required /></Field>
             </div>
             <div className="grid grid-cols-2 gap-2.5">
-              <Field label="Classe" htmlFor={`classe${i}`}>
-                <select id={`classe${i}`} className="h-12 w-full rounded-md border border-border bg-card px-3 text-base" value={b.classe} onChange={(e) => setBambini(bambini.map((x, j) => j === i ? { ...x, classe: e.target.value } : x))}>
-                  {CLASSI.map((c) => <option key={c}>{c}</option>)}
-                </select>
+              <Field>
+                <FieldLabel htmlFor={`classe${i}`}>Classe</FieldLabel>
+                <NativeSelect id={`classe${i}`} className="w-full" value={b.classe} onChange={(e) => setBambini(bambini.map((x, j) => j === i ? { ...x, classe: e.target.value } : x))}>
+                  {CLASSI.map((c) => <NativeSelectOption key={c}>{c}</NativeSelectOption>)}
+                </NativeSelect>
               </Field>
-              <Field label="Bambina / bambino" htmlFor={`genere${i}`} hint="Serve solo per scrivere bene gli avvisi">
-                <select id={`genere${i}`} className="h-12 w-full rounded-md border border-border bg-card px-3 text-base" value={b.genere} onChange={(e) => setBambini(bambini.map((x, j) => j === i ? { ...x, genere: e.target.value as Bambino["genere"] } : x))}>
-                  <option value="">—</option><option value="F">Bambina</option><option value="M">Bambino</option>
-                </select>
+              <Field>
+                <FieldLabel htmlFor={`genere${i}`}>Bambina / bambino</FieldLabel>
+                <NativeSelect id={`genere${i}`} className="w-full" value={b.genere} onChange={(e) => setBambini(bambini.map((x, j) => j === i ? { ...x, genere: e.target.value as Bambino["genere"] } : x))}>
+                  <NativeSelectOption value="">—</NativeSelectOption><NativeSelectOption value="F">Bambina</NativeSelectOption><NativeSelectOption value="M">Bambino</NativeSelectOption>
+                </NativeSelect>
+                <FieldDescription>Serve solo per scrivere bene gli avvisi</FieldDescription>
               </Field>
             </div>
-            <div className="border-t border-dashed border-border pt-2.5">
-              <Field label="Fermata dove sale" htmlFor={`fermata${i}`} hint="Si sceglie a parte: non dipende da scuola e classe.">
-                <select id={`fermata${i}`} className="h-12 w-full rounded-md border border-border bg-card px-3 text-base" value={b.fermata} onChange={(e) => setBambini(bambini.map((x, j) => j === i ? { ...x, fermata: e.target.value } : x))} required>
-                  <option value="">Scegli la fermata…</option>
-                  {opzioniFermate.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-                </select>
+            <div className="border-t border-dashed pt-2.5">
+              <Field>
+                <FieldLabel htmlFor={`fermata${i}`}>Fermata dove sale</FieldLabel>
+                <NativeSelect id={`fermata${i}`} className="w-full" value={b.fermata} onChange={(e) => setBambini(bambini.map((x, j) => j === i ? { ...x, fermata: e.target.value } : x))} required>
+                  <NativeSelectOption value="">Scegli la fermata…</NativeSelectOption>
+                  {opzioniFermate.map((o) => <NativeSelectOption key={o.id} value={o.id}>{o.label}</NativeSelectOption>)}
+                </NativeSelect>
+                <FieldDescription>Si sceglie a parte: non dipende da scuola e classe.</FieldDescription>
               </Field>
             </div>
           </Card>
         </div>
       ))}
-      <Button variant="dashed" block onClick={() => setBambini([...bambini, { nome: "", cognome, classe: CLASSI[0], genere: "", fermata: "" }])}><Plus size={16} /> Aggiungi un altro bambino</Button>
+      <Button variant="outline" className="w-full border-dashed" onClick={() => setBambini([...bambini, { nome: "", cognome, classe: CLASSI[0], genere: "", fermata: "" }])}><Plus /> Aggiungi un altro bambino</Button>
 
       <div className="flex flex-col gap-2">
         <H2>Contatti d&apos;emergenza</H2>
-        <p className="text-[13px] leading-[1.5] text-muted">Li vede solo il volontario di turno sulla linea, durante il turno. Nessun dato sanitario.</p>
+        <p className="text-[13px] leading-[1.5] text-muted-foreground">Li vede solo il volontario di turno sulla linea, durante il turno. Nessun dato sanitario.</p>
         {contatti.map((c, i) => (
           <div key={i} className="grid grid-cols-[1.3fr_1fr_1.2fr] gap-2">
             <Input placeholder="Nome" value={c.nome} onChange={(e) => setContatti(contatti.map((x, j) => j === i ? { ...x, nome: e.target.value } : x))} />
@@ -138,13 +148,13 @@ export function IscrizioneForm({ persona, scuole, linee, fermate, informativa }:
         ))}
       </div>
 
-      <label className="flex items-start gap-3 text-[13px] leading-[1.5]">
-        <input type="checkbox" className="mt-0.5 h-5 w-5 shrink-0 accent-accent" checked={consenso} onChange={(e) => setConsenso(e.target.checked)} required />
-        <span>Ho letto l&apos;{informativa?.url ? <a className="underline" href={informativa.url} target="_blank" rel="noreferrer">informativa privacy</a> : "informativa privacy"} (versione {informativa?.versione ?? "—"}) e acconsento al trattamento dei dati per il servizio Pedibus. Titolare: comitato Officina Civica.</span>
-      </label>
+      <Field orientation="horizontal">
+        <Checkbox id="consenso" checked={consenso} onCheckedChange={(v) => setConsenso(v === true)} required />
+        <FieldLabel htmlFor="consenso" className="text-[13px] leading-[1.5] font-normal">Ho letto l&apos;{informativa?.url ? <a className="underline" href={informativa.url} target="_blank" rel="noreferrer">informativa privacy</a> : "informativa privacy"} (versione {informativa?.versione ?? "—"}) e acconsento al trattamento dei dati per il servizio Pedibus. Titolare: comitato Officina Civica.</FieldLabel>
+      </Field>
 
-      {errore && <Alert tone="danger">{errore}</Alert>}
-      <Button type="submit" variant="primary" size="lg" block disabled={pending}>{pending ? "Invio…" : "Invia l'iscrizione"}</Button>
+      {errore && <Alert variant="destructive"><AlertDescription>{errore}</AlertDescription></Alert>}
+      <Button type="submit" size="lg" className="w-full" disabled={pending}>{pending ? "Invio…" : "Invia l'iscrizione"}</Button>
     </form>
   );
 }

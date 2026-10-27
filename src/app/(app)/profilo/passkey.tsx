@@ -45,28 +45,28 @@ export function Passkey() {
   });
 
   return (
-    <Card>
+    <Card size="sm" className="px-3">
       <div className="flex items-center justify-between gap-2.5">
         <span className="flex items-center gap-2"><Fingerprint size={16} /> Passkey (sblocco del telefono)</span>
-        <Badge tone={lista?.length ? "ok" : "muted"}>{lista === null ? "…" : lista.length ? `${lista.length} attiv${lista.length === 1 ? "a" : "e"}` : "non attiva"}</Badge>
+        <Badge variant={lista?.length ? "success" : "secondary"}>{lista === null ? "…" : lista.length ? `${lista.length} attiv${lista.length === 1 ? "a" : "e"}` : "non attiva"}</Badge>
       </div>
       {!supportata ? (
-        <p className="text-[13px] leading-[1.5] text-muted">Questo browser non supporta le passkey: continui a entrare con il codice via SMS.</p>
+        <p className="text-[13px] leading-[1.5] text-muted-foreground">Questo browser non supporta le passkey: continui a entrare con il codice via SMS.</p>
       ) : (
         <>
-          <p className="text-[13px] leading-[1.5] text-muted">Con la passkey entri con impronta o Face ID, senza aspettare l&apos;SMS. Il codice resta sempre disponibile come riserva.</p>
+          <p className="text-[13px] leading-[1.5] text-muted-foreground">Con la passkey entri con impronta o Face ID, senza aspettare l&apos;SMS. Il codice resta sempre disponibile come riserva.</p>
           {(lista ?? []).map((p) => (
             <div key={p.id} className="flex items-center justify-between gap-2 text-sm">
               <span className="flex items-center gap-2"><KeyRound size={14} /> {p.friendly_name || "Passkey"}</span>
-              <button type="button" className="text-[13px] text-muted underline" disabled={pending} onClick={() => rimuovi(p.id)}>rimuovi</button>
+              <Button variant="link" size="sm" className="text-muted-foreground" disabled={pending} onClick={() => rimuovi(p.id)}>rimuovi</Button>
             </div>
           ))}
-          <Button variant={lista?.length ? "outline" : "primary"} block disabled={pending} onClick={registra}>
+          <Button variant={lista?.length ? "outline" : "default"} disabled={pending} onClick={registra} className="w-full">
             <Fingerprint size={18} /> {lista?.length ? "Aggiungi una passkey su questo dispositivo" : "Attiva la passkey"}
           </Button>
         </>
       )}
-      {errore && <p className="text-[13px] text-danger">{errore}</p>}
+      {errore && <p className="text-[13px] text-destructive">{errore}</p>}
     </Card>
   );
 }

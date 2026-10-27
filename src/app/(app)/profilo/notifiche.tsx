@@ -66,25 +66,25 @@ export function Notifiche({ abbonamenti, vapidPublicKey, canali }: { abbonamenti
   const altri = abbonamenti.filter((a) => a.endpoint !== endpointQui && !a.fallito_il).length;
 
   return (
-    <Card>
+    <Card size="sm" className="px-3">
       <div className="flex items-center justify-between gap-2.5">
         <span className="flex items-center gap-2">{stato === "attivo" ? <BellRing size={16} /> : <BellOff size={16} />} Notifiche push su questo telefono</span>
-        <Badge tone={stato === "attivo" ? "ok" : stato === "negato" ? "danger" : "muted"}>
+        <Badge variant={stato === "attivo" ? "success" : stato === "negato" ? "destructive" : "secondary"}>
           {stato === "attivo" ? "attive" : stato === "negato" ? "bloccate" : stato === "controllo" ? "…" : "spente"}
         </Badge>
       </div>
-      {stato === "ios_home" && <p className="text-[13px] leading-[1.5] text-muted">Su iPhone le notifiche funzionano solo con l&apos;app aggiunta alla schermata Home: tocca Condividi → «Aggiungi alla schermata Home», poi riapri da lì.</p>}
-      {stato === "non_supportato" && <p className="text-[13px] leading-[1.5] text-muted">Questo browser non supporta le notifiche push: {senzaPush}</p>}
-      {stato === "negato" && <p className="text-[13px] leading-[1.5] text-muted">Hai bloccato le notifiche per questo sito: si riattivano dalle impostazioni del browser. Intanto {senzaPush}</p>}
+      {stato === "ios_home" && <p className="text-[13px] leading-[1.5] text-muted-foreground">Su iPhone le notifiche funzionano solo con l&apos;app aggiunta alla schermata Home: tocca Condividi → «Aggiungi alla schermata Home», poi riapri da lì.</p>}
+      {stato === "non_supportato" && <p className="text-[13px] leading-[1.5] text-muted-foreground">Questo browser non supporta le notifiche push: {senzaPush}</p>}
+      {stato === "negato" && <p className="text-[13px] leading-[1.5] text-muted-foreground">Hai bloccato le notifiche per questo sito: si riattivano dalle impostazioni del browser. Intanto {senzaPush}</p>}
       {stato === "spento" && (
         <>
-          <p className="text-[13px] leading-[1.5] text-muted">Senza notifiche non sai subito se una linea viene annullata o un turno resta scoperto: {senzaPush}</p>
-          <Button variant="primary" block disabled={pending} onClick={attiva}><BellRing size={18} /> Attiva le notifiche</Button>
+          <p className="text-[13px] leading-[1.5] text-muted-foreground">Senza notifiche non sai subito se una linea viene annullata o un turno resta scoperto: {senzaPush}</p>
+          <Button disabled={pending} onClick={attiva} className="w-full"><BellRing size={18} /> Attiva le notifiche</Button>
         </>
       )}
-      {stato === "attivo" && <Button block disabled={pending} onClick={spegni}><BellOff size={18} /> Spegni su questo telefono</Button>}
-      {altri > 0 && <p className="text-[13px] text-muted">Attive anche su {altri} {altri === 1 ? "altro dispositivo" : "altri dispositivi"}.</p>}
-      {errore && <p className="text-[13px] text-danger">{errore}</p>}
+      {stato === "attivo" && <Button variant="outline" disabled={pending} onClick={spegni} className="w-full"><BellOff size={18} /> Spegni su questo telefono</Button>}
+      {altri > 0 && <p className="text-[13px] text-muted-foreground">Attive anche su {altri} {altri === 1 ? "altro dispositivo" : "altri dispositivi"}.</p>}
+      {errore && <p className="text-[13px] text-destructive">{errore}</p>}
     </Card>
   );
 }

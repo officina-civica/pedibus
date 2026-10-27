@@ -1,9 +1,5 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+export { cn } from "cn"
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
+/* Iniziali per gli avatar: "Giulia Rossi" -> "GR". */
 export const iniziali = (nome: string) =>
-  nome.split(" ").map((s) => s[0]).join("").slice(0, 2).toUpperCase();
+  nome.split(" ").map((s) => s[0]).join("").slice(0, 2).toUpperCase()

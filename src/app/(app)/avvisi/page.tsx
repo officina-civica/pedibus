@@ -22,11 +22,11 @@ export default async function AvvisiPage() {
     <div className="flex flex-col gap-3.5">
       <div>
         <h1 className="text-[22px] font-bold tracking-tight">Avvisi</h1>
-        <p className="text-sm text-muted">{lista.length ? `${lista.length} avvisi` : "Nessun avviso per ora"}</p>
+        <p className="text-sm text-muted-foreground">{lista.length ? `${lista.length} avvisi` : "Nessun avviso per ora"}</p>
       </div>
       {nonLetti && <SegnaLetti />}
       {lista.length === 0 ? (
-        <Card><p className="text-[13px] leading-[1.5] text-muted">Gli avvisi arrivano come notifiche push sul telefono: attivale nel Profilo.{canali.sms_avvisi ? " Quelli urgenti arrivano anche via SMS." : ""} Qui restano in archivio.</p></Card>
+        <Card size="sm" className="px-3"><p className="text-[13px] leading-[1.5] text-muted-foreground">Gli avvisi arrivano come notifiche push sul telefono: attivale nel Profilo.{canali.sms_avvisi ? " Quelli urgenti arrivano anche via SMS." : ""} Qui restano in archivio.</p></Card>
       ) : (
         <div>
           {lista.map((a) => (
@@ -34,10 +34,10 @@ export default async function AvvisiPage() {
               <span className="mt-0.5 shrink-0">{a.tipo === "warn" ? <TriangleAlert size={18} /> : a.tipo === "ok" ? <Check size={18} /> : <Bell size={18} />}</span>
               <div className="min-w-0 flex-1">
                 <div className={`text-sm ${a.letto_il ? "font-semibold" : "font-bold"}`}>{a.titolo}</div>
-                <div className="text-[13px] leading-[1.45] text-muted">{a.corpo}</div>
-                {a.sms && <div className="mt-1"><Badge tone="accent"><TriangleAlert size={12} /> urgente{canali.sms_avvisi ? ", anche via SMS" : ""}</Badge></div>}
+                <div className="text-[13px] leading-[1.45] text-muted-foreground">{a.corpo}</div>
+                {a.sms && <div className="mt-1"><Badge variant="brand"><TriangleAlert size={12} /> urgente{canali.sms_avvisi ? ", anche via SMS" : ""}</Badge></div>}
               </div>
-              <span className="tabular shrink-0 pt-0.5 text-[11px] text-muted">{quando(a.creato_il)}</span>
+              <span className="tabular-nums shrink-0 pt-0.5 text-[11px] text-muted-foreground">{quando(a.creato_il)}</span>
             </div>
           ))}
         </div>

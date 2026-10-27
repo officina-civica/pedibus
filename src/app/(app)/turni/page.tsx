@@ -4,8 +4,9 @@ import { Calendar } from "lucide-react";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getSessione } from "@/lib/sessione";
 import { hhmm, oggiRome, quando } from "@/lib/date";
-import { Alert } from "@/components/ui/alert";
-import { Card, H2 } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Card } from "@/components/ui/card";
+import { H2 } from "@/components/blocchi";
 import { Badge } from "@/components/ui/badge";
 import { TurnoAdmin } from "./turno-admin";
 import { ProssimoTurno } from "./prossimo-turno";
@@ -34,37 +35,37 @@ export default async function TurniPage() {
       <div className="flex items-end justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-bold tracking-tight">I miei turni</h1>
-          <p className="text-sm text-muted">Due settimane da lunedì {new Date(lunedi(oggiRome()) + "T12:00:00").toLocaleDateString("it-IT", { day: "numeric", month: "long" })}</p>
+          <p className="text-sm text-muted-foreground">Due settimane da lunedì {new Date(lunedi(oggiRome()) + "T12:00:00").toLocaleDateString("it-IT", { day: "numeric", month: "long" })}</p>
         </div>
         <Link href="/profilo" className="text-[13px] font-medium underline-offset-2 hover:underline">Disponibilità</Link>
       </div>
 
       {dettaglio ? <ProssimoTurno t={dettaglio} /> : (
-        <Card><p className="text-[13px] leading-[1.5] text-muted">Nessun turno in programma. Quando arriva la bozza del mese, i tuoi turni compaiono qui.</p></Card>
+        <Card size="sm" className="px-3"><p className="text-[13px] leading-[1.5] text-muted-foreground">Nessun turno in programma. Quando arriva la bozza del mese, i tuoi turni compaiono qui.</p></Card>
       )}
 
       <div className="flex flex-col gap-2">
         <H2>Prossime due settimane</H2>
         {(settimana ?? []).length === 0 ? (
-          <Card><p className="text-[13px] text-muted">Nessun turno assegnato in questo periodo.</p></Card>
+          <Card size="sm" className="px-3"><p className="text-[13px] text-muted-foreground">Nessun turno assegnato in questo periodo.</p></Card>
         ) : (
           <div className="flex flex-col overflow-hidden rounded-xl border border-border">
             {(settimana ?? []).map((t) => {
               const oggi = t.giorno === oggiRome();
               const parte = PARTE.includes(t.stato_turno);
               return (
-                <div key={t.turno_id} className={`flex min-h-14 items-center gap-3 border-b border-border px-3 py-2 last:border-b-0 ${oggi ? "bg-accent-soft" : "bg-card"}`}>
+                <div key={t.turno_id} className={`flex min-h-14 items-center gap-3 border-b border-border px-3 py-2 last:border-b-0 ${oggi ? "bg-brand/10" : "bg-card"}`}>
                   <span className="flex w-11 flex-col items-center leading-[1.1]">
-                    <small className={`text-[11px] uppercase ${oggi ? "text-accent-fg" : "text-muted"}`}>{new Date(t.giorno + "T12:00:00").toLocaleDateString("it-IT", { weekday: "short" })}</small>
-                    <b className={`text-lg ${oggi ? "text-accent-fg" : ""}`}>{new Date(t.giorno + "T12:00:00").getDate()}</b>
+                    <small className={`text-[11px] uppercase ${oggi ? "text-brand" : "text-muted-foreground"}`}>{new Date(t.giorno + "T12:00:00").toLocaleDateString("it-IT", { weekday: "short" })}</small>
+                    <b className={`text-lg ${oggi ? "text-brand" : ""}`}>{new Date(t.giorno + "T12:00:00").getDate()}</b>
                   </span>
                   <span className="flex-1 text-sm">
                     <span className="font-semibold">{t.ruolo === "backup" ? "Backup" : "Turno"} · {t.linea_nome}</span>
-                    {t.stato_mio === "non_viene" && <span className="text-muted"> · hai avvisato</span>}
-                    {t.stato_mio === "copre" && <span className="text-muted"> · copri tu</span>}
-                    {!parte && <span className="text-danger"> · {ETICHETTA[t.stato_turno]}</span>}
+                    {t.stato_mio === "non_viene" && <span className="text-muted-foreground"> · hai avvisato</span>}
+                    {t.stato_mio === "copre" && <span className="text-muted-foreground"> · copri tu</span>}
+                    {!parte && <span className="text-destructive"> · {ETICHETTA[t.stato_turno]}</span>}
                   </span>
-                  <Badge tone={t.ruolo === "backup" ? "muted" : "dark"}>{t.ruolo === "backup" ? "riserva" : hhmm(t.ora_partenza)}</Badge>
+                  <Badge variant={t.ruolo === "backup" ? "secondary" : "default"}>{t.ruolo === "backup" ? "riserva" : hhmm(t.ora_partenza)}</Badge>
                 </div>
               );
             })}
@@ -72,14 +73,18 @@ export default async function TurniPage() {
         )}
       </div>
 
-      <Alert icon={<Calendar size={16} />} title={`${nomeMese.charAt(0).toUpperCase() + nomeMese.slice(1)}`}>
-        {bozza && bozza.stato !== "pubblicata" ? (
-          <>La bozza dei turni è arrivata{bozza.inviata_il ? ` il ${quando(bozza.inviata_il)}` : ""}: chi non risponde{bozza.scadenza_silenzio_assenso ? ` entro il ${new Date(bozza.scadenza_silenzio_assenso + "T12:00:00").toLocaleDateString("it-IT", { day: "numeric", month: "long" })}` : ""} conferma per silenzio-assenso. </>
-        ) : (
-          <>La bozza dei turni arriva alla fine del mese. Chi non risponde entro la scadenza conferma per silenzio-assenso. </>
-        )}
-        {(eccezioni ?? []).length ? `Hai ${eccezioni!.length} ${eccezioni!.length > 1 ? "eccezioni segnate" : "eccezione segnata"}. ` : "Un giorno diverso dal solito? Segnalo prima della bozza. "}
-        <Link href="/profilo#eccezioni" className="font-semibold underline-offset-2 hover:underline">Eccezioni</Link>
+      <Alert>
+        <Calendar />
+        <AlertTitle>{nomeMese.charAt(0).toUpperCase() + nomeMese.slice(1)}</AlertTitle>
+        <AlertDescription>
+          {bozza && bozza.stato !== "pubblicata" ? (
+            <>La bozza dei turni è arrivata{bozza.inviata_il ? ` il ${quando(bozza.inviata_il)}` : ""}: chi non risponde{bozza.scadenza_silenzio_assenso ? ` entro il ${new Date(bozza.scadenza_silenzio_assenso + "T12:00:00").toLocaleDateString("it-IT", { day: "numeric", month: "long" })}` : ""} conferma per silenzio-assenso. </>
+          ) : (
+            <>La bozza dei turni arriva alla fine del mese. Chi non risponde entro la scadenza conferma per silenzio-assenso. </>
+          )}
+          {(eccezioni ?? []).length ? `Hai ${eccezioni!.length} ${eccezioni!.length > 1 ? "eccezioni segnate" : "eccezione segnata"}. ` : "Un giorno diverso dal solito? Segnalo prima della bozza. "}
+          <Link href="/profilo#eccezioni" className="font-semibold underline-offset-2 hover:underline">Eccezioni</Link>
+        </AlertDescription>
       </Alert>
     </div>
   );

@@ -1,5 +1,20 @@
 import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
+import { ThemeProvider } from "next-themes";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import "./globals.css";
+
+// Inter dal pacchetto @fontsource-variable (self-hosted): la build non dipende da Google Fonts.
+const inter = localFont({
+  src: [
+    { path: "../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2", style: "normal" },
+    { path: "../../node_modules/@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2", style: "normal" },
+  ],
+  variable: "--font-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: { default: "Pedibus Vedano", template: "%s · Pedibus Vedano" },
@@ -21,8 +36,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="it" className="h-full antialiased">
-      <body className="flex min-h-full flex-col">{children}</body>
+    // suppressHydrationWarning: next-themes aggiunge la classe `dark` su <html> prima dell'idratazione.
+    <html lang="it" suppressHydrationWarning className={cn("h-full antialiased", inter.variable)}>
+      <body className="flex h-full flex-col">
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <TooltipProvider>{children}</TooltipProvider>
+          <Toaster position="bottom-center" mobileOffset={{ bottom: 96 }} offset={{ bottom: 96 }} />
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

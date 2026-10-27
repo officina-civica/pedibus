@@ -1,7 +1,7 @@
 import type { Sessione } from "@/lib/sessione";
 import type { RuoloTipo } from "@/lib/database.types";
 import { cambiaRuolo } from "@/app/(app)/azioni";
-import { Avatar } from "@/components/ui/card";
+import { Avatar } from "@/components/blocchi";
 import { cn, iniziali } from "@/lib/utils";
 
 const ETICHETTA: Record<RuoloTipo, string> = { genitore: "Genitore", volontario: "Volontario", admin: "Admin" };
@@ -16,18 +16,18 @@ export function TopBar({ sessione: s }: { sessione: Sessione }) {
         <Avatar accent>{iniziali(nome || "P")}</Avatar>
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold">{nome || "Pedibus"}</div>
-          <div className="text-xs text-muted">{s.ruoloAttivo ? ETICHETTA[s.ruoloAttivo] : ""} · Pedibus Vedano</div>
+          <div className="text-xs text-muted-foreground">{s.ruoloAttivo ? ETICHETTA[s.ruoloAttivo] : ""} · Pedibus Vedano</div>
         </div>
       </div>
       {ruoli.length > 1 && (
-        <div className="flex gap-0.5 rounded-full bg-muted-bg p-[3px]" role="tablist" aria-label="Ruolo">
+        <div className="flex gap-0.5 rounded-full bg-muted p-[3px]" role="tablist" aria-label="Ruolo">
           {ruoli.map((r) => (
             <form key={r} action={cambiaRuolo.bind(null, r)}>
               <button
                 type="submit"
                 role="tab"
                 aria-selected={s.ruoloAttivo === r}
-                className={cn("min-h-9 rounded-full px-3 text-[13px] font-semibold text-muted", s.ruoloAttivo === r && "bg-card text-fg shadow-sm")}
+                className={cn("min-h-9 rounded-full px-3 text-[13px] font-semibold text-muted-foreground", s.ruoloAttivo === r && "bg-card text-foreground shadow-xs")}
               >
                 {ETICHETTA[r]}
               </button>

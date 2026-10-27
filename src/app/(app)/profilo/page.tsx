@@ -3,7 +3,8 @@ import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getSessione, nomeCompleto } from "@/lib/sessione";
-import { Avatar, Card, H2, Row, Rows } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
+import { Avatar, H2, Row, Rows } from "@/components/blocchi";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { iniziali } from "@/lib/utils";
@@ -58,7 +59,7 @@ export default async function ProfiloPage() {
         <Avatar accent size="lg">{iniziali(nome || "P")}</Avatar>
         <div>
           <h1 className="text-[22px] font-bold tracking-tight">{nome || "Il tuo profilo"}</h1>
-          <p className="text-sm text-muted">{ruoliTesto}{s.telefono ? ` · ${s.telefono}` : ""}</p>
+          <p className="text-sm text-muted-foreground">{ruoliTesto}{s.telefono ? ` · ${s.telefono}` : ""}</p>
         </div>
       </div>
 
@@ -84,17 +85,17 @@ export default async function ProfiloPage() {
           <Disponibilita giorni={(disp ?? []).map((d) => d.giorno)} eccezioni={ecc ?? []} mese={meseIso} chiusure={(chiusure ?? []).map((c) => c.giorno)} bozzaFatta={(bozze ?? []).length > 0} />
           <div className="flex flex-col gap-2">
             <H2>Dotazioni</H2>
-            <Card>
-              <div className="flex items-center justify-between gap-2.5"><span className="flex items-center gap-2"><BriefcaseMedical size={16} /> Kit di primo soccorso</span><Badge tone={(dotazioni ?? []).some((d) => d.tipo === "kit") ? "ok" : "muted"}>{(dotazioni ?? []).some((d) => d.tipo === "kit") ? "consegnato" : "non assegnato"}</Badge></div>
-              <div className="flex items-center justify-between gap-2.5"><span>Pettorina</span><span className="text-[13px] text-muted">{(dotazioni ?? []).find((d) => d.tipo === "pettorina")?.numero ? `n. ${(dotazioni ?? []).find((d) => d.tipo === "pettorina")!.numero}` : "—"}</span></div>
-              <div className="flex items-center justify-between gap-2.5"><span>Paletta</span><span className="text-[13px] text-muted">{(dotazioni ?? []).some((d) => d.tipo === "paletta") ? "consegnata" : "personale"}</span></div>
+            <Card size="sm" className="px-3">
+              <div className="flex items-center justify-between gap-2.5"><span className="flex items-center gap-2"><BriefcaseMedical size={16} /> Kit di primo soccorso</span><Badge variant={(dotazioni ?? []).some((d) => d.tipo === "kit") ? "success" : "secondary"}>{(dotazioni ?? []).some((d) => d.tipo === "kit") ? "consegnato" : "non assegnato"}</Badge></div>
+              <div className="flex items-center justify-between gap-2.5"><span>Pettorina</span><span className="text-[13px] text-muted-foreground">{(dotazioni ?? []).find((d) => d.tipo === "pettorina")?.numero ? `n. ${(dotazioni ?? []).find((d) => d.tipo === "pettorina")!.numero}` : "—"}</span></div>
+              <div className="flex items-center justify-between gap-2.5"><span>Paletta</span><span className="text-[13px] text-muted-foreground">{(dotazioni ?? []).some((d) => d.tipo === "paletta") ? "consegnata" : "personale"}</span></div>
             </Card>
           </div>
           <div className="flex flex-col gap-2">
             <H2>Requisiti</H2>
-            <Card>
-              <div className="flex items-center justify-between gap-2.5"><span>Albo dei volontari civici</span><Badge tone="ok">verificato</Badge></div>
-              <div className="flex items-center justify-between gap-2.5"><span>Assicurazione</span><span className="text-[13px] text-muted">a carico del Comune</span></div>
+            <Card size="sm" className="px-3">
+              <div className="flex items-center justify-between gap-2.5"><span>Albo dei volontari civici</span><Badge variant="success">verificato</Badge></div>
+              <div className="flex items-center justify-between gap-2.5"><span>Assicurazione</span><span className="text-[13px] text-muted-foreground">a carico del Comune</span></div>
             </Card>
           </div>
         </>
@@ -113,9 +114,9 @@ export default async function ProfiloPage() {
                   <Avatar>{iniziali(`${b.nome} ${b.cognome}`)}</Avatar>
                   <div className="min-w-0 flex-1">
                     <div className="text-base font-semibold">{b.nome} {b.cognome}</div>
-                    <div className="text-[13px] text-muted">{b.classe}{linea ? ` · ${linea}` : ""}{fermata ? `, fermata ${fermata}` : ""}{b.pettorina ? ` · pettorina n. ${b.pettorina}` : ""}</div>
+                    <div className="text-[13px] text-muted-foreground">{b.classe}{linea ? ` · ${linea}` : ""}{fermata ? `, fermata ${fermata}` : ""}{b.pettorina ? ` · pettorina n. ${b.pettorina}` : ""}</div>
                   </div>
-                  <Badge tone={i?.stato === "approvata" ? "ok" : i?.stato === "rifiutata" ? "danger" : "accent"}>
+                  <Badge variant={i?.stato === "approvata" ? "success" : i?.stato === "rifiutata" ? "destructive" : "brand"}>
                     {i?.stato === "approvata" ? "iscritto" : i?.stato === "rifiutata" ? "rifiutata" : "in attesa"}
                   </Badge>
                 </Row>
@@ -135,12 +136,12 @@ export default async function ProfiloPage() {
       {(contatti ?? []).length > 0 && (
         <div className="flex flex-col gap-2">
           <H2>Contatti d&apos;emergenza</H2>
-          <p className="text-[13px] leading-[1.5] text-muted">Li vede solo il volontario di turno sulla linea dei tuoi bambini, e ogni consultazione resta registrata. Nessun dato sanitario.</p>
+          <p className="text-[13px] leading-[1.5] text-muted-foreground">Li vede solo il volontario di turno sulla linea dei tuoi bambini, e ogni consultazione resta registrata. Nessun dato sanitario.</p>
           <Rows>
             {(contatti ?? []).map((c) => (
               <Row key={c.id} className="min-h-14">
                 <span className="flex-1">{c.nome} ({c.relazione})</span>
-                <span className="tabular text-[13px] text-muted">{c.telefono}</span>
+                <span className="tabular-nums text-[13px] text-muted-foreground">{c.telefono}</span>
               </Row>
             ))}
           </Rows>
@@ -149,15 +150,15 @@ export default async function ProfiloPage() {
 
       <div className="flex flex-col gap-2">
         <H2>Privacy</H2>
-        <Card>
-          <div className="flex items-center justify-between gap-2.5"><span>Informativa privacy</span><Badge tone="muted">{informativa ? `v. ${informativa.versione} · ${new Date(informativa.valida_dal).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" })}` : "—"}</Badge></div>
-          <div className="flex items-center justify-between gap-2.5"><span>Dati conservati</span><span className="text-[13px] text-muted">Unione Europea · fino a fine anno + 30 giorni</span></div>
+        <Card size="sm" className="px-3">
+          <div className="flex items-center justify-between gap-2.5"><span>Informativa privacy</span><Badge variant="secondary">{informativa ? `v. ${informativa.versione} · ${new Date(informativa.valida_dal).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" })}` : "—"}</Badge></div>
+          <div className="flex items-center justify-between gap-2.5"><span>Dati conservati</span><span className="text-[13px] text-muted-foreground">Unione Europea · fino a fine anno + 30 giorni</span></div>
         </Card>
       </div>
 
-      <Link href="/iscrizione" className="inline-flex min-h-12 w-full items-center justify-center rounded-md border border-dashed border-border bg-card px-4 text-sm font-medium">Iscrivi un altro bambino</Link>
+      <Button variant="outline" className="w-full border-dashed" render={<Link href="/iscrizione" />}>Iscrivi un altro bambino</Button>
       <form action={esci}>
-        <Button type="submit" block><LogOut size={18} /> Esci</Button>
+        <Button variant="outline" type="submit" className="w-full"><LogOut size={18} /> Esci</Button>
       </form>
     </div>
   );

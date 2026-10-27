@@ -18,9 +18,9 @@ export default async function InAttesaPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center gap-3.5 px-4 pt-20 text-center">
-      <span className="flex h-16 w-16 items-center justify-center rounded-full bg-accent-soft text-accent-fg"><Hourglass size={28} /></span>
+      <span className="flex h-16 w-16 items-center justify-center rounded-full bg-brand/10 text-brand"><Hourglass size={28} /></span>
       <h1 className="text-[22px] font-bold tracking-tight">{nomeCompleto(s.persona) ? `Ciao ${s.persona!.nome}` : "Quasi pronto"}</h1>
-      <p className="text-sm text-muted">
+      <p className="text-sm text-muted-foreground">
         {inAttesa.length
           ? "La tua richiesta è arrivata all'amministratore: quando la approva ricevi un avviso e l'app si apre."
           : rifiutati.length
@@ -28,9 +28,9 @@ export default async function InAttesaPage() {
           : "Il tuo numero non risulta ancora iscritto al pedibus. Se hai fatto l'iscrizione, l'amministratore la sta verificando; altrimenti contatta il comitato."}
       </p>
       {!inAttesa.length && !rifiutati.length && (
-        <Link href="/iscrizione" className="mt-2 inline-flex min-h-12 w-full items-center justify-center rounded-md border border-primary bg-primary px-4 font-semibold text-primary-fg">Iscrivi i tuoi bambini</Link>
+        <Button size="lg" className="mt-2 w-full" render={<Link href="/iscrizione" />}>Iscrivi i tuoi bambini</Button>
       )}
-      <form action={esci} className="mt-2 w-full"><Button type="submit" block>Esci</Button></form>
+      <form action={esci} className="mt-2 w-full"><Button type="submit" variant="outline" size="lg" className="w-full">Esci</Button></form>
     </main>
   );
 }

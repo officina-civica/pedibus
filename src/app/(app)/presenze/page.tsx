@@ -3,7 +3,7 @@ import { Clock } from "lucide-react";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getSessione } from "@/lib/sessione";
 import { giornoLungo, oggiODomani, hhmm, oggiRome } from "@/lib/date";
-import { Alert } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
 import { SchedaBambino } from "./scheda-bambino";
 import type { StatoTurno } from "@/lib/database.types";
@@ -42,21 +42,29 @@ export default async function PresenzePage() {
     <div className="flex flex-col gap-3.5">
       <div>
         <h1 className="text-[22px] font-bold tracking-tight">Presenze</h1>
-        <p className="text-sm text-muted">{giornoLabel === "oggi" ? "Oggi" : "Domani"}, {giornoLungo(giorno).toLowerCase()}</p>
+        <p className="text-sm text-muted-foreground">{giornoLabel === "oggi" ? "Oggi" : "Domani"}, {giornoLungo(giorno).toLowerCase()}</p>
       </div>
 
       {chiuse ? (
-        <Alert tone="warn" icon={<Clock size={16} />} title={`Assenze chiuse alle ${hhmm(chiusura)}`}>
-          Puoi ancora segnalare o annullare un&apos;assenza: la modifica viene segnata come tardiva e i volontari di turno sono avvisati.
+        <Alert variant="warning">
+          <Clock />
+          <AlertTitle>{`Assenze chiuse alle ${hhmm(chiusura)}`}</AlertTitle>
+          <AlertDescription>
+            Puoi ancora segnalare o annullare un&apos;assenza: la modifica viene segnata come tardiva e i volontari di turno sono avvisati.
+          </AlertDescription>
         </Alert>
       ) : (
-        <Alert icon={<Clock size={16} />} title={`Segnala le assenze entro le ${hhmm(chiusura)}`}>
-          I tuoi bambini sono presenti salvo avviso. Si segnalano solo le assenze.
+        <Alert>
+          <Clock />
+          <AlertTitle>{`Segnala le assenze entro le ${hhmm(chiusura)}`}</AlertTitle>
+          <AlertDescription>
+            I tuoi bambini sono presenti salvo avviso. Si segnalano solo le assenze.
+          </AlertDescription>
         </Alert>
       )}
 
       {miei.length === 0 && (
-        <Card><p className="text-[13px] text-muted">Nessun bambino con iscrizione approvata. Quando l&apos;amministratore approva l&apos;iscrizione, compare qui.</p></Card>
+        <Card size="sm" className="px-3"><p className="text-[13px] text-muted-foreground">Nessun bambino con iscrizione approvata. Quando l&apos;amministratore approva l&apos;iscrizione, compare qui.</p></Card>
       )}
 
       {miei.map((b) => {
@@ -78,19 +86,24 @@ export default async function PresenzePage() {
       {(linee ?? []).map((l) => {
         const parte = PARTE.includes(l.stato);
         const pre = !chiuse && l.presenti < l.soglia_bambini && l.stato === "programmato";
-        const tone = !parte ? "danger" : pre ? "warn" : "ok";
+        const variant = !parte ? "destructive" : pre ? "warning" : "success";
         return (
-          <Alert key={l.linea_id} tone={tone} icon={<span className="mt-1 inline-block h-3 w-3 rounded-full" style={{ background: l.colore }} />}
-            title={`${l.nome}: ${pre ? "per ora sotto soglia" : ETICHETTA_STATO[l.stato]}`}>
-            {l.presenti} bambini presenti {giornoLabel} · soglia minima {l.soglia_bambini}
-            {pre && ` · si decide alle ${hhmm(l.ora_chiusura_assenze)}`}
-            {l.consegnato_alle && ` · consegnati a scuola alle ${hhmm(l.consegnato_alle)}`}
+          <Alert key={l.linea_id} variant={variant}>
+            <AlertTitle className="flex items-center gap-2">
+              <span className="inline-block h-3 w-3 shrink-0 rounded-full" style={{ background: l.colore }} />
+              {l.nome}: {pre ? "per ora sotto soglia" : ETICHETTA_STATO[l.stato]}
+            </AlertTitle>
+            <AlertDescription>
+              {l.presenti} bambini presenti {giornoLabel} · soglia minima {l.soglia_bambini}
+              {pre && ` · si decide alle ${hhmm(l.ora_chiusura_assenze)}`}
+              {l.consegnato_alle && ` · consegnati a scuola alle ${hhmm(l.consegnato_alle)}`}
+            </AlertDescription>
           </Alert>
         );
       })}
 
       {deleghe && deleghe.length > 0 && (
-        <p className="text-[13px] leading-[1.5] text-muted">
+        <p className="text-[13px] leading-[1.5] text-muted-foreground">
           Il backup che hai indicato ({deleghe.map((d) => d.etichetta).filter(Boolean).join(", ") || "una persona di fiducia"}) può segnare presenze e assenze al posto tuo, nient&apos;altro.
         </p>
       )}

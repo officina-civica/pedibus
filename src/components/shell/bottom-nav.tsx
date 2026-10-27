@@ -27,11 +27,11 @@ export function BottomNav({ ruolo, nonLetti }: { ruolo: RuoloTipo; nonLetti: num
         const on = pathname === href || pathname.startsWith(href + "/");
         return (
           <Link key={href} href={href} aria-current={on ? "page" : undefined}
-            className={cn("relative flex min-h-12 flex-col items-center justify-center gap-[3px] py-1.5 text-[11px] font-medium text-muted", on && "font-semibold text-accent")}>
+            className={cn("relative flex min-h-12 flex-col items-center justify-center gap-[3px] py-1.5 text-[11px] font-medium text-muted-foreground", on && "font-semibold text-brand")}>
             <Icon size={22} />
             {label}
             {badge ? (
-              <span className="absolute top-0.5 left-[calc(50%+6px)] flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-white">{badge}</span>
+              <span className="absolute top-0.5 left-[calc(50%+6px)] flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold text-brand-foreground">{badge}</span>
             ) : null}
           </Link>
         );

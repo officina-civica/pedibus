@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Plus } from "lucide-react";
 import { supabaseServer } from "@/lib/supabase/server";
 import { quando } from "@/lib/date";
-import { Card, H2, Rows } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
+import { H2, Rows } from "@/components/blocchi";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RigaIscrizione, RigaRuolo } from "./righe";
@@ -40,12 +41,12 @@ export default async function IscrizioniPage() {
   return (
     <div className="flex flex-col gap-3.5">
       <div className="flex items-end justify-between gap-3">
-        <div><h1 className="text-[22px] font-bold tracking-tight">Iscrizioni</h1><p className="text-sm text-muted">Anno scolastico 2026/27</p></div>
-        <Badge tone="accent">{inAttesa.length + ruoliAttesa.length} in attesa</Badge>
+        <div><h1 className="text-[22px] font-bold tracking-tight">Iscrizioni</h1><p className="text-sm text-muted-foreground">Anno scolastico 2026/27</p></div>
+        <Badge variant="brand">{inAttesa.length + ruoliAttesa.length} in attesa</Badge>
       </div>
-      <p className="text-[13px] leading-[1.5] text-muted">Ogni iscrizione resta registrata con stato, data, chi l&apos;ha approvata e la versione dell&apos;informativa accettata. Per i volontari si verifica prima l&apos;iscrizione all&apos;albo civico.</p>
+      <p className="text-[13px] leading-[1.5] text-muted-foreground">Ogni iscrizione resta registrata con stato, data, chi l&apos;ha approvata e la versione dell&apos;informativa accettata. Per i volontari si verifica prima l&apos;iscrizione all&apos;albo civico.</p>
 
-      {inAttesa.length + ruoliAttesa.length === 0 ? <Card><p className="text-[13px] text-muted">Nessuna richiesta in attesa.</p></Card> : (
+      {inAttesa.length + ruoliAttesa.length === 0 ? <Card size="sm" className="px-3"><p className="text-[13px] text-muted-foreground">Nessuna richiesta in attesa.</p></Card> : (
         <Rows>
           {ruoliAttesa.map((r) => <RigaRuolo key={r.persona_id + r.ruolo} personaId={r.persona_id} scuolaId={r.scuola_id} nome={nome(r.persona_id)} when={quando(r.richiesto_il)} note={r.note} />)}
           {inAttesa.map((r) => <RigaIscrizione key={r.id} {...r} />)}
@@ -62,11 +63,11 @@ export default async function IscrizioniPage() {
       <div className="flex flex-col gap-2">
         <H2>Riepilogo</H2>
         <div className="grid grid-cols-2 gap-2.5">
-          <Card className="gap-1"><H2>Bambini iscritti</H2><span className="text-[22px] font-bold">{iscritti}</span></Card>
-          <Card className="gap-1"><H2>Volontari</H2><span className="text-[22px] font-bold">{volontari ?? 0}</span></Card>
+          <Card size="sm" className="px-3 gap-1"><H2>Bambini iscritti</H2><span className="text-[22px] font-bold">{iscritti}</span></Card>
+          <Card size="sm" className="px-3 gap-1"><H2>Volontari</H2><span className="text-[22px] font-bold">{volontari ?? 0}</span></Card>
         </div>
       </div>
-      <Button variant="dashed" block disabled title="In arrivo"><Plus size={16} /> Inserisci a mano chi non usa l&apos;app</Button>
+      <Button variant="outline" disabled title="In arrivo" className="w-full border-dashed"><Plus size={16} /> Inserisci a mano chi non usa l&apos;app</Button>
     </div>
   );
 }

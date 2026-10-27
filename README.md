@@ -5,8 +5,8 @@ Officina Civica. Genitori segnalano le assenze, volontari fanno i turni e l'appe
 vede tutto e interviene solo quando l'automatismo non basta.
 
 Questo repository contiene le **fondamenta**: il database su Supabase con schema, regole, visibilità per
-ruolo e job a orario, più un test che rigioca un'intera giornata. L'app (PWA, shadcn/ui) arriva dopo,
-portando le schermate del prototipo un ruolo alla volta.
+ruolo e job a orario, più un test che rigioca un'intera giornata, e l'app (PWA, Next.js, shadcn/ui) con le
+schermate del prototipo per i tre ruoli.
 
 Documenti di riferimento (Claude Docs): *App Pedibus – Requisiti iniziali*, *Ipotesi UX*, e il prototipo
 interattivo *Pedibus Vedano* (demo con regia + mappa di tutte le schermate).
@@ -14,11 +14,14 @@ interattivo *Pedibus Vedano* (demo con regia + mappa di tutte le schermate).
 ## Struttura
 
 ```
-src/                                  l'app (Next.js 16, App Router, Tailwind 4, componenti stile shadcn/ui)
+src/                                  l'app (Next.js 16, App Router, Tailwind 4, shadcn/ui)
   app/accesso                         telefono → codice SMS; passkey
   app/(app)/…                         presenze, avvisi, profilo, turni, appello, oggi, iscrizioni, linee
   app/iscrizione                      il modulo di iscrizione
   app/(app)/azioni*.ts                server actions: ogni regola è una RPC del database
+  components/ui                       i componenti shadcn/ui installati dalla CLI (non si modificano a mano: `npx shadcn add -o`)
+  components/blocchi.tsx              i mattoni dell'app che non sono shadcn: H2, Rows/Row, Avatar con le iniziali
+  app/globals.css                     il tema: token shadcn (zinc) + `brand` (arancio pettorina) e `success`
   lib/supabase                        client browser / server (@supabase/ssr); proxy.ts rinfresca la sessione
   lib/database.types.ts               tipi del DB scritti a mano (da sostituire con `supabase gen types`)
 public/sw.js, manifest.webmanifest    PWA: service worker per le push, icone
@@ -164,8 +167,26 @@ chiusure modificabile.
 Scelte da sapere: le pagine sono tutte dinamiche (`cacheComponents` spento: dati per utente ovunque); i dati
 passano da Supabase con la RLS dell'utente, le regole dalle RPC; la lettura dei conteggi di linea è una funzione
 `security definer` perché il genitore non può leggere le presenze degli altri. Su iPhone le push richiedono l'app
-aggiunta alla schermata Home: il profilo lo spiega. Il registry di shadcn non era raggiungibile dalla sandbox:
-i componenti (`src/components/ui`) sono scritti a mano nello stesso stile; `npx shadcn add` funziona comunque.
+aggiunta alla schermata Home: il profilo lo spiega.
+
+### Design system: shadcn/ui
+
+Installato con la CLI ufficiale (`components.json`: style `base-vega` su Base UI, base color zinc, icone Lucide,
+font Inter). I componenti in `src/components/ui` sono quelli del registry, non vanno ritoccati a mano: per
+aggiungerne uno, `npx shadcn@latest add <nome>`; per riallinearne uno al registry, `npx shadcn@latest add -o <nome>`.
+Le sole aggiunte ai file del registry sono due varianti in più su `alert` (`warning`, `success`) e `badge`
+(`brand`, `success`), segnate con un commento.
+
+Il tema sta tutto in `src/app/globals.css`: i token shadcn generati dalla CLI più due dell'app, `--brand` (l'arancio
+della pettorina: in shadcn `accent` vuol dire un'altra cosa) e `--success`. Sfondi tenui e bordi si fanno con
+l'opacità (`bg-brand/10`, `border-destructive/30`), non con token dedicati. Il tema scuro segue il sistema tramite
+`next-themes` (classe `dark` su `<html>`), come da documentazione shadcn per Next.js. Inter è self-hosted da
+`@fontsource-variable/inter` via `next/font/local`: la build non dipende da Google Fonts.
+
+Le notifiche a video sono `sonner` (`toast(...)`), il `Toaster` sta nel layout radice sopra la barra di navigazione.
+I `<select>` sono `NativeSelect` (sul telefono si apre il selettore di sistema); i form usano `Field`/`FieldLabel`.
+Le misure dei controlli sono quelle del registry (bottone `lg` = 40px); se sul marciapiede servono più grandi, si
+cambia la scala in `button.tsx` una volta sola.
 
 Le letture che l'app fa per volontario e admin (`turno_dettaglio`, `miei_turni`, `appello_anteprima`,
 `appello_stato`, `riepilogo_admin`, `turni_del_giorno`) sono funzioni `security definer` con il controllo di ruolo
