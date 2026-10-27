@@ -261,11 +261,11 @@ compare in `cron.job`).
 
 ## Avvio in produzione
 
-Il database di produzione parte **vuoto**: niente comune, scuola, linee, fermate, informativa, nessun admin. Prima del
-primo utente vero vanno inseriti con uno script SQL (dall'editor della dashboard): comune e scuola, l'informativa
-privacy in vigore, le linee con le fermate (ordine, orario, capolinea, arrivo), e il primo amministratore
-(`insert into ruoli … 'admin', 'approvata'` sulla persona che si è già registrata). Le migrazioni si spingono con
-`npx supabase db push`.
+Il database di produzione parte **vuoto**: niente comune, scuola, linee, fermate, informativa, nessun admin. Le
+migrazioni si spingono con `npx supabase db push`; poi `supabase/avvio-produzione.sql`, una volta, dall'editor SQL
+della dashboard: comune e scuola, l'informativa in vigore, le linee con le fermate (da sostituire con quelle vere:
+ordine, orario, capolinea, arrivo) e il primo amministratore, scelto per telefono tra le persone già entrate
+(`<<TELEFONO_ADMIN>>`). È idempotente. Gli altri admin li nomina lui dall'app.
 
 ## Cosa manca, in ordine
 
