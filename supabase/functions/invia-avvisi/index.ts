@@ -1,8 +1,9 @@
 // =============================================================================
 // Pedibus · invia-avvisi
-// Svuota la coda degli avvisi: push a ogni abbonamento della persona; SMS sempre
-// per gli urgenti (avvisi.sms = true) e come ripiego, se l'impostazione
-// sms_ripiego è attiva, per chi non ha nessun abbonamento push.
+// Svuota la coda degli avvisi: push a ogni abbonamento della persona. Gli SMS
+// dipendono da due interruttori in impostazioni (l'admin li cambia dall'app):
+// sms_avvisi = urgenti anche via SMS; sms_ripiego = SMS a chi non ha le push.
+// Per ora entrambi spenti: gli SMS servono solo all'OTP di accesso.
 // Chiamata dal database (trigger pg_net all'inserimento, cron ogni 2 minuti) o a
 // mano. Autenticazione: header x-pedibus-secret = PEDIBUS_CRON_SECRET.
 //
@@ -98,7 +99,8 @@ Deno.serve(async (req) => {
   }
 
   const { data: imp } = await supabase.from("impostazioni").select("chiave, valore");
-  const smsRipiego = (imp ?? []).find((r) => r.chiave === "sms_ripiego")?.valore === "true";
+  const smsAttivi = (imp ?? []).find((r) => r.chiave === "sms_avvisi")?.valore === "true";
+  const smsRipiego = smsAttivi && (imp ?? []).find((r) => r.chiave === "sms_ripiego")?.valore === "true";
 
   // La coda: non ancora spinto, o urgente senza SMS; non più vecchio di un giorno; backoff rispettato.
   const { data: coda, error } = await supabase
@@ -134,7 +136,9 @@ Deno.serve(async (req) => {
     // SMS: sempre se urgente; altrimenti solo come ripiego per chi non ha push.
     if (a.sms_esito === null) {
       const senzaPush = pushEsito === "nessun_abbonamento";
-      if (a.sms || (smsRipiego && senzaPush)) {
+      if (!smsAttivi) {
+        esito.sms_esito = "disattivato";
+      } else if (a.sms || (smsRipiego && senzaPush)) {
         const telefono = telefonoDi(a.destinatario_id);
         esito.sms_esito = telefono ? await inviaSms(a, telefono) : "nessun_telefono";
         if (esito.sms_esito === "inviato") sms++;

@@ -144,6 +144,23 @@ const shot = async (p, nome) => { if (SHOTS) await p.screenshot({ path: `${SHOTS
   await p.waitForTimeout(800);
   ok(await p.getByRole("button", { name: /Invia per conferma/ }).isVisible(), "bozza generata, da inviare");
   await shot(p, "18-admin-turni-bozza");
+  await p.goto(APP + "/profilo");
+  const sw = p.getByRole("switch", { name: /SMS per gli avvisi urgenti/ });
+  ok(await sw.isVisible() && (await sw.getAttribute("aria-checked")) === "false", "profilo admin: interruttore SMS urgenti, spento");
+  ok(await p.getByRole("switch", { name: /SMS a chi non ha le push/ }).isDisabled(), "ripiego disabilitato finché gli SMS sono spenti");
+  await sw.click();
+  await p.getByText("Canale attivato.").waitFor({ timeout: 8000 });
+  await p.waitForTimeout(800);
+  ok((await p.getByRole("switch", { name: /SMS per gli avvisi urgenti/ }).getAttribute("aria-checked")) === "true", "SMS urgenti accesi senza toccare codice");
+  ok(await p.getByRole("switch", { name: /SMS a chi non ha le push/ }).isEnabled(), "ripiego ora attivabile");
+  await shot(p, "19-admin-canali");
+  await p.goto(APP + "/avvisi");
+  ok(await p.getByText(/urgente, anche via SMS/).first().isVisible(), "gli avvisi urgenti dichiarano l'SMS");
+  await p.goto(APP + "/profilo");
+  await p.getByRole("switch", { name: /SMS per gli avvisi urgenti/ }).click();
+  await p.getByText("Canale spento.").waitFor({ timeout: 8000 });
+  await p.waitForTimeout(500);
+  ok((await p.getByRole("switch", { name: /SMS per gli avvisi urgenti/ }).getAttribute("aria-checked")) === "false", "e rispenti");
 
   console.log("Karimi · ora genitore approvato");
   await entra(context, "karimi");

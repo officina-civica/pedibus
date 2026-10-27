@@ -84,6 +84,9 @@ export type PushAbbonamento = { id: string; persona_id: string; endpoint: string
 
 type Tabella<R, I = Partial<R>, U = Partial<R>> = { Row: R; Insert: I; Update: U; Relationships: [] };
 
+export type CanaleChiave = "sms_avvisi" | "sms_ripiego";
+export type Canali = Record<CanaleChiave, boolean>;
+
 export type Database = {
   public: {
     Tables: {
@@ -124,6 +127,8 @@ export type Database = {
       appello_anteprima: { Args: { p_turno: string }; Returns: FermataAnteprima[] };
       appello_stato: { Args: { p_turno: string }; Returns: AppelloStato | null };
       riepilogo_admin: { Args: { p_giorno?: string | null }; Returns: RiepilogoAdmin };
+      canali: { Args: Record<string, never>; Returns: Canali };
+      imposta_canale: { Args: { p_chiave: CanaleChiave; p_valore: boolean }; Returns: Canali };
       turni_del_giorno: { Args: { p_giorno: string }; Returns: TurnoDettaglio[] };
       non_posso_venire: { Args: { p_turno: string }; Returns: string };
       copro_turno: { Args: { p_turno: string }; Returns: string };

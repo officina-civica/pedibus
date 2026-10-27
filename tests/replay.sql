@@ -383,6 +383,13 @@ select deve_fallire(format('insert into push_abbonamenti (persona_id, endpoint, 
 select come(:marta);
 select verifica((select count(*) from push_abbonamenti) = 0, 'Marta non vede gli abbonamenti di Giulia');
 select deve_fallire('select * from impostazioni', 'nessun utente legge le impostazioni');
+select verifica(canali() = '{"sms_avvisi": false, "sms_ripiego": false}'::jsonb, 'gli interruttori SMS sono spenti e leggibili da chiunque');
+select deve_fallire('select imposta_canale(''sms_avvisi'', true)', 'Marta non cambia i canali');
+select come(:admin);
+select verifica((imposta_canale('sms_avvisi', true)->>'sms_avvisi') = 'true', 'l''admin accende gli SMS per gli urgenti');
+select deve_fallire('select imposta_canale(''invia_avvisi_secret'', true)', 'i segreti non sono interruttori');
+select verifica((imposta_canale('sms_avvisi', false)->>'sms_avvisi') = 'false', 'e li rispegne');
+select come(:marta);
 select deve_fallire('select avvisi_webhook()', 'il webhook non è chiamabile dall''app');
 reset role;
 -- Con un URL configurato ma senza pg_net (locale) l'inserimento di un avviso non fallisce.

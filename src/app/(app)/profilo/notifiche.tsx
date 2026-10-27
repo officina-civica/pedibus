@@ -7,12 +7,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { salvaAbbonamentoPush, rimuoviAbbonamentoPush } from "@/app/(app)/azioni";
+import type { Canali } from "@/lib/database.types";
 
 type Abb = { id: string; endpoint: string; user_agent: string | null; creato_il: string; fallito_il: string | null };
 
 /* Attiva o spegne le notifiche push su QUESTO dispositivo. Gli altri dispositivi restano come sono. */
-export function Notifiche({ abbonamenti, vapidPublicKey }: { abbonamenti: Abb[]; vapidPublicKey: string }) {
+export function Notifiche({ abbonamenti, vapidPublicKey, canali }: { abbonamenti: Abb[]; vapidPublicKey: string; canali: Canali }) {
   const router = useRouter();
+  // Cosa succede a chi non ha le push: dipende dagli interruttori del comitato.
+  const senzaPush = canali.sms_avvisi && canali.sms_ripiego ? "gli avvisi arrivano via SMS."
+    : canali.sms_avvisi ? "gli avvisi urgenti arrivano via SMS, gli altri restano nell'app."
+    : "gli avvisi restano nell'app, nella sezione Avvisi.";
   const [stato, setStato] = useState<"controllo" | "non_supportato" | "negato" | "attivo" | "spento" | "ios_home">("controllo");
   const [endpointQui, setEndpointQui] = useState<string | null>(null);
   const [errore, setErrore] = useState<string | null>(null);
@@ -69,11 +74,11 @@ export function Notifiche({ abbonamenti, vapidPublicKey }: { abbonamenti: Abb[];
         </Badge>
       </div>
       {stato === "ios_home" && <p className="text-[13px] leading-[1.5] text-muted">Su iPhone le notifiche funzionano solo con l&apos;app aggiunta alla schermata Home: tocca Condividi → «Aggiungi alla schermata Home», poi riapri da lì.</p>}
-      {stato === "non_supportato" && <p className="text-[13px] leading-[1.5] text-muted">Questo browser non supporta le notifiche push. Gli avvisi urgenti arrivano comunque via SMS.</p>}
-      {stato === "negato" && <p className="text-[13px] leading-[1.5] text-muted">Hai bloccato le notifiche per questo sito: si riattivano dalle impostazioni del browser. Intanto gli urgenti arrivano via SMS.</p>}
+      {stato === "non_supportato" && <p className="text-[13px] leading-[1.5] text-muted">Questo browser non supporta le notifiche push: {senzaPush}</p>}
+      {stato === "negato" && <p className="text-[13px] leading-[1.5] text-muted">Hai bloccato le notifiche per questo sito: si riattivano dalle impostazioni del browser. Intanto {senzaPush}</p>}
       {stato === "spento" && (
         <>
-          <p className="text-[13px] leading-[1.5] text-muted">Senza push, gli avvisi normali arrivano via SMS solo se il comitato lo ha attivato; quelli urgenti sempre.</p>
+          <p className="text-[13px] leading-[1.5] text-muted">Senza notifiche non sai subito se una linea viene annullata o un turno resta scoperto: {senzaPush}</p>
           <Button variant="primary" block disabled={pending} onClick={attiva}><BellRing size={18} /> Attiva le notifiche</Button>
         </>
       )}

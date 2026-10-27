@@ -12,6 +12,8 @@ import { Notifiche } from "./notifiche";
 import { Passkey } from "./passkey";
 import { Disponibilita } from "./disponibilita";
 import { Backup } from "./backup";
+import { Canali } from "./canali";
+import { getCanali } from "@/lib/canali";
 import { BriefcaseMedical } from "lucide-react";
 import { oggiRome } from "@/lib/date";
 
@@ -22,12 +24,13 @@ const RUOLO: Record<string, string> = { genitore: "Genitore principale", volonta
 export default async function ProfiloPage() {
   const s = await getSessione();
   const supabase = await supabaseServer();
-  const [{ data: bambini }, { data: iscrizioni }, { data: deleghe }, { data: contatti }, { data: abbonamenti }] = await Promise.all([
+  const [{ data: bambini }, { data: iscrizioni }, { data: deleghe }, { data: contatti }, { data: abbonamenti }, canali] = await Promise.all([
     supabase.from("bambini").select("*").eq("genitore_id", s.userId).order("nome"),
     supabase.from("iscrizioni").select("*"),
     supabase.from("deleghe").select("*").eq("genitore_id", s.userId),
-    supabase.from("contatti_emergenza").select("*").order("ordine"),
+    supabase.from("contatti_emergenza").select("*, bambini!inner(genitore_id)").eq("bambini.genitore_id", s.userId).order("ordine"),
     supabase.from("push_abbonamenti").select("id, endpoint, user_agent, creato_il, fallito_il").eq("persona_id", s.userId),
+    getCanali(),
   ]);
   const ids = [...new Set((iscrizioni ?? []).map((i) => i.linea_id))];
   const { data: linee } = ids.length ? await supabase.from("linee").select("id, nome").in("id", ids) : { data: [] };
@@ -61,8 +64,15 @@ export default async function ProfiloPage() {
 
       <div className="flex flex-col gap-2">
         <H2>Avvisi sul telefono</H2>
-        <Notifiche abbonamenti={abbonamenti ?? []} vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""} />
+        <Notifiche abbonamenti={abbonamenti ?? []} vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""} canali={canali} />
       </div>
+
+      {s.ruoli.some((r) => r.ruolo === "admin") && (
+        <div className="flex flex-col gap-2">
+          <H2>Canali di notifica</H2>
+          <Canali canali={canali} />
+        </div>
+      )}
 
       <div className="flex flex-col gap-2">
         <H2>Accesso</H2>

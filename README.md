@@ -34,7 +34,8 @@ supabase/
     20261027000700_letture_turni.sql  letture di volontario e admin (turno, appello, riepilogo)
     20261027000800_rls_deleghe.sql    il genitore vede il proprio delegato (trovato dal giro e2e)
     20261027000900_deleghe_app.sql    aggiungi_delega(telefono): il backup del genitore dall'app
-  functions/invia-avvisi/index.ts     la Edge Function che svuota la coda: Web Push + SMS (Twilio)
+    20261027001000_sms_solo_otp.sql   interruttori SMS (sms_avvisi, sms_ripiego) + canali(), imposta_canale()
+  functions/invia-avvisi/index.ts     la Edge Function che svuota la coda: Web Push (+ SMS Twilio se acceso)
   seed.sql                            il "martedì a Vedano" del prototipo (solo sviluppo)
 prototipo/index.html                  il prototipo interattivo (demo con regia + mappa delle schermate)
 tests/
@@ -66,7 +67,7 @@ Tutto ciò che ha una regola passa da una funzione (RPC) e non da scritture dire
 | Chi | Funzione | Cosa fa |
 |---|---|---|
 | genitore / delegato | `segna_presenza(bambino, stato, giorno)` | segna o annulla un'assenza; dopo le 18:00 è tardiva: avvisa volontari e admin, rivaluta la soglia |
-| volontario | `non_posso_venire(turno)` | escalation: backup avvisati (SMS), admin avvisato; dopo 10 minuti tutti i volontari |
+| volontario | `non_posso_venire(turno)` | escalation: backup avvisati (urgente), admin avvisato; dopo 10 minuti tutti i volontari |
 | volontario | `copro_turno(turno)` | un volontario approvato copre; se si torna al minimo l'escalation si chiude |
 | volontario di turno | `apri_appello`, `segna_salito`, `aggiungi_all_appello`, `prossima_fermata`, `consegna` | il giro: chi non sale è "non trovato" e il genitore lo sa subito; si aggiunge solo un iscritto; la consegna avvisa le famiglie |
 | volontario di turno | `contatti_emergenza_turno(turno)` | unica via ai contatti: solo durante il turno, consultazione registrata |
@@ -88,14 +89,19 @@ invece di nasconderli (lunedì scoperti, giovedì senza kit): è un segnaposto o
 - **Amministratore**: tutto nella propria scuola; ogni decisione resta registrata con chi e quando.
 - **Anonimo**: linee, fermate, informativa (servono per iscriversi).
 
-## Avvisi: push + SMS di riserva (deciso il 27/10)
+## Avvisi: push; SMS solo con gli interruttori accesi (deciso il 27/10)
 
 Il database mette in coda (`avvisi`), la Edge Function `invia-avvisi` consegna. Regola:
 
 - **push** a ogni abbonamento della persona (`push_abbonamenti`); un endpoint che risponde 404/410 è morto e viene segnato;
-- **SMS sempre** per gli urgenti (`sms = true`: linea annullata o riattivata, turno scoperto, bambino non trovato);
-- **SMS di ripiego** per gli avvisi normali solo a chi non ha nessun abbonamento push, se `impostazioni.sms_ripiego = true`
-  (è la voce che decide il costo mensile: con tutti su push gli SMS restano decine al mese);
+- **SMS**: per ora **spenti** — gli SMS servono solo al codice di accesso (OTP). Negli avvisi passerebbero in chiaro, a un
+  fornitore terzo, nome e fermata di un minore, e ogni SMS costa. Il codice resta pronto, comandato da due interruttori
+  in `impostazioni`, che l'admin accende dall'app (**Profilo → Canali di notifica**) senza toccare il codice:
+  - `sms_avvisi` — gli urgenti (`sms = true`: linea annullata o riattivata, turno scoperto, bambino non trovato) partono anche via SMS;
+  - `sms_ripiego` — chi non ha nessun abbonamento push riceve via SMS anche gli avvisi normali (ha effetto solo con `sms_avvisi` acceso;
+    è la voce che decide il costo mensile).
+  La funzione `canali()` espone i due valori a chiunque sia entrato (i testi dell'app si adattano); `imposta_canale(chiave, bool)`
+  li cambia, solo admin e solo per queste due chiavi. Quando sono spenti la funzione scrive `sms_esito = 'disattivato'`.
 - un errore non blocca la coda: si riprova con attesa crescente, fino a 10 tentativi, mai oltre 24 ore.
 
 La funzione viene chiamata subito all'inserimento (trigger → `pg_net`) e ogni 2 minuti come ritentativo (`pg_cron`).

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabase/server";
-import type { RuoloTipo, StatoApprovazione } from "@/lib/database.types";
+import type { CanaleChiave, RuoloTipo, StatoApprovazione } from "@/lib/database.types";
 
 type Esito = { ok: boolean; messaggio: string };
 const esito = (error: { message: string } | null, msg: string, paths: string[]): Esito => {
@@ -39,4 +39,10 @@ export async function pubblicaBozza(bozzaId: string): Promise<Esito> {
   const supabase = await supabaseServer();
   const { error } = await supabase.rpc("pubblica_bozza", { p_bozza: bozzaId });
   return esito(error, "Turni pubblicati.", ["/turni", "/oggi"]);
+}
+
+export async function impostaCanale(chiave: CanaleChiave, valore: boolean): Promise<Esito> {
+  const supabase = await supabaseServer();
+  const { error } = await supabase.rpc("imposta_canale", { p_chiave: chiave, p_valore: valore });
+  return esito(error, valore ? "Canale attivato." : "Canale spento.", ["/profilo", "/avvisi"]);
 }
