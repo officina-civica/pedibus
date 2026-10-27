@@ -7,6 +7,12 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { HOME } from "@/lib/sessione";
 import type { RuoloTipo, StatoPresenza } from "@/lib/database.types";
 
+/* Chi sta chiamando, dal JWT verificato in locale (niente chiamata al server di autenticazione). */
+async function utenteId(supabase: Awaited<ReturnType<typeof supabaseServer>>): Promise<string | null> {
+  const { data } = await supabase.auth.getClaims();
+  return data?.claims?.sub ?? null;
+}
+
 export async function cambiaRuolo(ruolo: RuoloTipo) {
   (await cookies()).set("ruolo", ruolo, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
   redirect(HOME[ruolo]);
@@ -30,17 +36,17 @@ export async function segnaPresenza(bambinoId: string, stato: StatoPresenza, gio
 
 export async function segnaAvvisiLetti() {
   const supabase = await supabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
-  await supabase.from("avvisi").update({ letto_il: new Date().toISOString() }).eq("destinatario_id", user.id).is("letto_il", null);
+  const userId = await utenteId(supabase);
+  if (!userId) return;
+  await supabase.from("avvisi").update({ letto_il: new Date().toISOString() }).eq("destinatario_id", userId).is("letto_il", null);
 }
 
 export async function salvaAbbonamentoPush(sub: { endpoint: string; keys: { p256dh: string; auth: string } }, userAgent: string) {
   const supabase = await supabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { ok: false };
+  const userId = await utenteId(supabase);
+  if (!userId) return { ok: false };
   const { error } = await supabase.from("push_abbonamenti").upsert(
-    { persona_id: user.id, endpoint: sub.endpoint, p256dh: sub.keys.p256dh, auth: sub.keys.auth, user_agent: userAgent },
+    { persona_id: userId, endpoint: sub.endpoint, p256dh: sub.keys.p256dh, auth: sub.keys.auth, user_agent: userAgent },
     { onConflict: "endpoint" },
   );
   return { ok: !error, errore: error?.message };
@@ -62,9 +68,9 @@ export async function aggiungiDelega(telefono: string, etichetta: string): Promi
 
 export async function rimuoviDelega(delegatoId: string) {
   const supabase = await supabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
-  await supabase.from("deleghe").delete().eq("genitore_id", user.id).eq("delegato_id", delegatoId);
+  const userId = await utenteId(supabase);
+  if (!userId) return;
+  await supabase.from("deleghe").delete().eq("genitore_id", userId).eq("delegato_id", delegatoId);
   revalidatePath("/profilo");
 }
 

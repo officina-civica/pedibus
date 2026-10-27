@@ -21,12 +21,16 @@ const PRIORITA: RuoloTipo[] = ["genitore", "volontario", "admin"];
    barra in alto (cookie "ruolo") quando una persona ne ha più d'uno. */
 export async function getSessione(): Promise<Sessione> {
   const supabase = await supabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/accesso");
+  // Verifica locale del JWT (vedi proxy.ts): sub e phone bastano, il resto sta in persone/ruoli.
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (!claims) redirect("/accesso");
+  const userId = claims.sub;
+  const telefono = typeof claims.phone === "string" && claims.phone ? claims.phone : null;
 
   const [{ data: persona }, { data: ruoliTutti }] = await Promise.all([
-    supabase.from("persone").select("*").eq("id", user.id).maybeSingle(),
-    supabase.from("ruoli").select("*").eq("persona_id", user.id),
+    supabase.from("persone").select("*").eq("id", userId).maybeSingle(),
+    supabase.from("ruoli").select("*").eq("persona_id", userId),
   ]);
   const ruoli = (ruoliTutti ?? []).filter((r) => r.stato === "approvata");
   const scelto = (await cookies()).get("ruolo")?.value as RuoloTipo | undefined;
@@ -35,7 +39,7 @@ export async function getSessione(): Promise<Sessione> {
   const scuolaId = ruoli.find((r) => r.ruolo === ruoloAttivo)?.scuola_id ?? ruoli[0]?.scuola_id ?? null;
 
   const registrato = !!persona && persona.nome.trim() !== "" && persona.cognome.trim() !== "";
-  return { userId: user.id, telefono: user.phone ?? null, persona: persona ?? null, ruoli, ruoliRichiesti: ruoliTutti ?? [], ruoloAttivo, scuolaId, registrato };
+  return { userId, telefono, persona: persona ?? null, ruoli, ruoliRichiesti: ruoliTutti ?? [], ruoloAttivo, scuolaId, registrato };
 }
 
 export const nomeCompleto = (p: Persona | null) => (p ? `${p.nome} ${p.cognome}`.trim() : "");

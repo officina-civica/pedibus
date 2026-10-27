@@ -2,7 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 /* Rinfresca la sessione Supabase a ogni richiesta e protegge le pagine dell'app:
-   senza utente si va all'accesso, con utente l'accesso rimanda dentro. */
+   senza utente si va all'accesso, con utente l'accesso rimanda dentro.
+   getClaims() verifica il JWT in locale (chiavi asimmetriche del progetto, JWKS in cache):
+   niente chiamata al server di autenticazione a ogni richiesta, a differenza di getUser(). */
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
@@ -16,7 +18,8 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
   const { pathname } = request.nextUrl;
   const pubblica = pathname === "/accesso";
 
