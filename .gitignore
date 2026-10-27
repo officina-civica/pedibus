@@ -1,0 +1,19 @@
+# Supabase
+supabase/.branches
+supabase/.temp
+supabase/.env
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules
+.next
+dist
+coverage
+
+# OS / editor
+.DS_Store
+.vscode
+.idea
+*.log
