@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { Fingerprint, KeyRound } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { segnaPasskeyRegistrataQui } from "@/lib/passkey-locale";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +35,7 @@ export function Passkey() {
       const nome = /iPhone|iPad/.test(navigator.userAgent) ? "iPhone" : /Android/.test(navigator.userAgent) ? "Android" : "Questo dispositivo";
       const { error } = await supabaseBrowser().auth.registerPasskey({ friendlyName: nome } as never);
       if (error) { setErrore(error.message); return; }
+      segnaPasskeyRegistrataQui(true);
       await carica();
     } catch (e) {
       setErrore(e instanceof Error && /abort|cancel|NotAllowed/i.test(e.message) ? null : (e instanceof Error ? e.message : "Registrazione non riuscita."));
