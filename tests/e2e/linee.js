@@ -49,7 +49,7 @@ const attendi = (p, re) => p.getByText(re).first().waitFor({ timeout: 10000 });
   await p.getByRole("button", { name: "Aggiungi" }).click();
   await attendi(p, /Fermata aggiunta/);
   await p.waitForTimeout(600);
-  const nomi = async () => (await gialla.locator("span.min-w-0.flex-1.text-sm").allInnerTexts()).map((t) => t.split(" · ")[0]);
+  const nomi = async () => (await gialla.locator("[data-fermata-nome]").allInnerTexts()).map((t) => t.split(" · ")[0]);
   ok((await nomi()).join(" > ") === "Capolinea > Via Lambro > Piazza Mercato > Scuola primaria", "fermate in ordine: " + (await nomi()).join(" > "));
   await gialla.getByRole("button", { name: "Sposta su Piazza Mercato" }).click();
   await attendi(p, /Ordine aggiornato/); await p.waitForTimeout(600);

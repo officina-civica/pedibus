@@ -64,17 +64,17 @@ export function LineaDialog({ scuolaId, linea, open, onOpenChange }: { scuolaId:
               </label>
             </div>
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 items-end gap-3">
             <Field><FieldLabel htmlFor="l-partenza">Partenza</FieldLabel><Input id="l-partenza" type="time" value={d.oraPartenza} onChange={(e) => set("oraPartenza", e.target.value)} required /></Field>
             <Field><FieldLabel htmlFor="l-arrivo">Arrivo a scuola</FieldLabel><Input id="l-arrivo" type="time" value={d.oraArrivo} onChange={(e) => set("oraArrivo", e.target.value)} required /></Field>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 items-end gap-3">
             <Field><FieldLabel htmlFor="l-soglia">Soglia bimbi</FieldLabel><Input id="l-soglia" type="number" inputMode="numeric" min={1} value={d.sogliaBambini} onChange={(e) => set("sogliaBambini", num(e.target.value, 1))} /></Field>
-            <Field><FieldLabel htmlFor="l-min">Volontari min.</FieldLabel><Input id="l-min" type="number" inputMode="numeric" min={1} value={d.minVolontari} onChange={(e) => set("minVolontari", num(e.target.value, 1))} /></Field>
+            <Field><FieldLabel htmlFor="l-min">Min. volontari</FieldLabel><Input id="l-min" type="number" inputMode="numeric" min={1} value={d.minVolontari} onChange={(e) => set("minVolontari", num(e.target.value, 1))} /></Field>
             <Field><FieldLabel htmlFor="l-cons">Consigliati</FieldLabel><Input id="l-cons" type="number" inputMode="numeric" min={1} value={d.volontariConsigliati} onChange={(e) => set("volontariConsigliati", num(e.target.value, 1))} /></Field>
           </div>
           <FieldDescription>Sotto la soglia di bambini presenti la linea si annulla la sera prima; sotto il minimo di volontari un&apos;ora prima della partenza.</FieldDescription>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 items-end gap-3">
             <Field><FieldLabel htmlFor="l-chiusura">Chiusura assenze</FieldLabel><Input id="l-chiusura" type="time" value={d.oraChiusuraAssenze} onChange={(e) => set("oraChiusuraAssenze", e.target.value)} required /></Field>
             <Field><FieldLabel htmlFor="l-definitiva">Soglia definitiva</FieldLabel><Input id="l-definitiva" type="time" value={d.oraSogliaDefinitiva} onChange={(e) => set("oraSogliaDefinitiva", e.target.value)} required /></Field>
           </div>

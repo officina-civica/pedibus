@@ -117,7 +117,7 @@ export function IscrizioneForm({ persona, scuole, linee, fermate, informativa }:
               <Field>
                 <FieldLabel htmlFor={`fermata${i}`}>Fermata dove sale</FieldLabel>
                 <NativeSelect id={`fermata${i}`} className="w-full" value={b.fermata} onChange={(e) => setBambini(bambini.map((x, j) => j === i ? { ...x, fermata: e.target.value } : x))}>
-                  <NativeSelectOption value="">Non lo so ancora: la decidiamo col comitato</NativeSelectOption>
+                  <NativeSelectOption value="">Non lo so ancora</NativeSelectOption>
                   {opzioniFermate.map((o) => <NativeSelectOption key={o.id} value={o.id}>{o.label}</NativeSelectOption>)}
                 </NativeSelect>
                 <FieldDescription>Se non la sai, lasciala vuota: l&apos;amministratore la assegna quando approva.</FieldDescription>

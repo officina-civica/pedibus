@@ -79,16 +79,17 @@ export function ProssimoTurno({ t }: { t: TurnoDettaglio }) {
         <Alert variant="warning"><BriefcaseMedical /><AlertTitle>Nessun kit di primo soccorso nel turno</AlertTitle><AlertDescription>Chi ha il kit lo porti, o avvisa l&apos;amministratore.</AlertDescription></Alert>
       )}
 
-      <div className="flex gap-2">
+      {/* I pulsanti vanno a capo quando lo schermo è stretto, invece di uscire dalla scheda. */}
+      <div className="flex flex-wrap gap-2">
         {sonoDentro && (
-          <Button variant="destructive" className="flex-1" disabled={pending || hoAvvisato || finito || !parte} onClick={() => esegui(() => nonPossoVenire(t.id))}>
+          <Button variant="destructive" className="min-w-[9.5rem] flex-1" disabled={pending || hoAvvisato || finito || !parte} onClick={() => esegui(() => nonPossoVenire(t.id))}>
             {hoAvvisato ? "Hai avvisato" : "Non posso venire"}
           </Button>
         )}
         {possoCoprire && parte && !finito && !coperto && (
-          <Button className="flex-1" disabled={pending} onClick={() => esegui(() => coproTurno(t.id))}>Copro io il turno</Button>
+          <Button className="min-w-[9.5rem] flex-1" disabled={pending} onClick={() => esegui(() => coproTurno(t.id))}>Copro io il turno</Button>
         )}
-        <Button variant="outline" className="flex-1" onClick={() => setBackup(!backup)}><Users size={16} /> Chi è di backup</Button>
+        <Button variant="outline" className="min-w-[9.5rem] flex-1" onClick={() => setBackup(!backup)}><Users size={16} /> Chi è di backup</Button>
       </div>
 
       {backup && (

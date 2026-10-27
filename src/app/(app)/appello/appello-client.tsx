@@ -122,7 +122,7 @@ export function AppelloInCorso({ turno: t, stato: a }: { turno: TurnoDettaglio; 
       )}
 
       {!arrivo && (
-        <Button variant="outline" onClick={() => setAggiungo(!aggiungo)} className="w-full border-dashed"><Plus size={16} /> {aggiungo ? "Chiudi" : "Non è in lista? Aggiungi un bambino iscritto"}</Button>
+        <Button variant="outline" onClick={() => setAggiungo(!aggiungo)} className="h-auto min-h-9 w-full border-dashed whitespace-normal"><Plus size={16} /> {aggiungo ? "Chiudi" : "Non è in lista? Aggiungi un bambino iscritto"}</Button>
       )}
       {aggiungo && !arrivo && (
         <>

@@ -47,10 +47,10 @@ export function BozzaMese({ bozza, scuolaId, meseIso, eccezioni }: { bozza: Bozz
             {perQuestoMese.stato === "inviata" && `Inviata ai volontari: chi non risponde entro il ${perQuestoMese.scadenza_silenzio_assenso ? new Date(perQuestoMese.scadenza_silenzio_assenso + "T12:00:00").toLocaleDateString("it-IT", { day: "numeric", month: "long" }) : "la scadenza"} conferma per silenzio-assenso.`}
             {perQuestoMese.stato === "pubblicata" && "Pubblicata: i turni sono definitivi, le modifiche si fanno turno per turno."}
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {perQuestoMese.stato === "bozza" && <>
-              <Button variant="outline" className="flex-1" disabled={pending} onClick={() => esegui(() => generaBozza(scuolaId, meseIso))}><RotateCcw size={14} /> Rigenera</Button>
-              <Button className="flex-1" disabled={pending} onClick={() => esegui(() => inviaBozza(perQuestoMese.id))}>Invia per conferma</Button>
+              <Button variant="outline" className="min-w-[8rem] flex-1" disabled={pending} onClick={() => esegui(() => generaBozza(scuolaId, meseIso))}><RotateCcw size={14} /> Rigenera</Button>
+              <Button className="min-w-[8rem] flex-1" disabled={pending} onClick={() => esegui(() => inviaBozza(perQuestoMese.id))}>Invia per conferma</Button>
             </>}
             {perQuestoMese.stato === "inviata" && <Button disabled={pending} onClick={() => esegui(() => pubblicaBozza(perQuestoMese.id))} className="w-full">Pubblica i turni</Button>}
           </div>

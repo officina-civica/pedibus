@@ -151,7 +151,7 @@ L'**amministratore non si registra**: il primo si nomina a mano nel database (ve
 li nomina (e revoca) un admin dal proprio Profilo, sezione "Amministratori", tra le persone già registrate
 (`nomina_admin()` / `revoca_admin()`; non si revoca mai l'ultimo).
 
-L'**iscrizione** di un bambino può arrivare **senza fermata** ("la decidiamo col comitato"): resta in attesa e
+L'**iscrizione** di un bambino può arrivare **senza fermata** ("Non lo so ancora"): resta in attesa e
 l'amministratore sceglie linea e fermata nella riga di approvazione, in Iscrizioni. Un'iscrizione approvata ha
 sempre linea e fermata (vincolo nel database). Il primo contatto d'emergenza è chi iscrive, con il numero con cui
 è entrato. Il percorso è coperto da `npm run e2e:registrazione`.
@@ -246,6 +246,7 @@ che lo script stampa, l'app gira contro i dati del seed.
 npm run e2e:avvia                       # database pedibus_e2e, PostgREST :3011, supalite :54329
 npm run build && npx next start -p 3077
 npm run e2e -- --shots /tmp/shots       # il giro: Giulia, Marta, Paolo, Anna, admin, Karimi
+npm run e2e:layout                      # ogni schermata con campi a 320/360/390/430px: niente controlli sovrapposti o fuori schermo
 ```
 
 Il giro entra come ciascuno iniettando il cookie di sessione e rifà la storia del martedì nell'app: assenza di

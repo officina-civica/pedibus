@@ -146,6 +146,7 @@ const shot = async (p, nome) => { if (SHOTS) await p.screenshot({ path: `${SHOTS
   await shot(p, "18-admin-turni-bozza");
   await p.goto(APP + "/profilo");
   const sw = p.getByRole("switch", { name: /SMS per gli avvisi urgenti/ });
+  await sw.waitFor({ timeout: 10000 });   // il nome accessibile arriva con l'idratazione
   ok(await sw.isVisible() && (await sw.getAttribute("aria-checked")) === "false", "profilo admin: interruttore SMS urgenti, spento");
   ok(await p.getByRole("switch", { name: /SMS a chi non ha le push/ }).isDisabled(), "ripiego disabilitato finché gli SMS sono spenti");
   await sw.click();

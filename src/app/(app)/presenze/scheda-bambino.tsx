@@ -38,7 +38,8 @@ export function SchedaBambino({ bambino, linea, fermata, orario, giorno, giornoL
         </div>
         {tardiva && <Badge variant="brand">tardiva</Badge>}
       </div>
-      <div className="grid grid-cols-2 gap-2.5">
+      {/* Due colonne dove ci stanno, una sola sui telefoni stretti: i pulsanti non si accavallano. */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(8.75rem,1fr))] gap-2.5">
         <span className={`inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border px-2.5 text-[13px] font-semibold ${assente ? "border-destructive/30 bg-destructive/10 text-destructive" : "border-success/30 bg-success/10 text-success"}`}>
           {assente ? <><X size={14} strokeWidth={2.5} /> Assente {giornoLabel}</> : <><Check size={14} /> Presente {giornoLabel}</>}
         </span>

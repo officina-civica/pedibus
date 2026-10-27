@@ -50,17 +50,22 @@ export function LineaCard({ scuolaId, linea: l, fermate: st, bambiniPerFermata, 
       </div>
 
       {st.map((f) => (
+        /* Nome su una riga, orario e bambini sotto: così il nome ha spazio anche sui telefoni stretti e non finisce sopra l'orario. */
         <div key={f.id} className="flex min-h-12 items-center gap-2 border-t border-border py-1 pr-1 pl-3">
           <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${f.arrivo ? "bg-brand text-brand-foreground" : "bg-primary text-primary-foreground"}`}>{f.arrivo ? <Flag size={12} strokeWidth={3} /> : f.ordine}</span>
-          <span className="min-w-0 flex-1 text-sm font-medium leading-tight">{f.nome}{f.capolinea ? <span className="font-normal text-muted-foreground"> · capolinea</span> : f.arrivo ? <span className="font-normal text-muted-foreground"> · arrivo</span> : null}</span>
-          <span className="tabular-nums text-[13px] text-muted-foreground">{hhmm(f.orario)}</span>
-          {!f.arrivo && (
-            <button type="button" aria-label={`Bambini alla fermata ${f.nome}`} disabled={!(bambiniPerFermata[f.id]?.length)} onClick={() => setBambiniDi(f)}
-              className="min-w-6 rounded-full bg-muted px-2 py-0.5 text-center text-[11px] font-semibold enabled:hover:bg-brand/10 enabled:hover:text-brand disabled:cursor-default">
-              {bambiniPerFermata[f.id]?.length || ""}
-            </button>
-          )}
-          <span className="flex items-center">
+          <span className="min-w-0 flex-1">
+            <span data-fermata-nome className="block text-sm font-medium leading-tight break-words">{f.nome}{f.capolinea ? <span className="font-normal text-muted-foreground"> · capolinea</span> : f.arrivo ? <span className="font-normal text-muted-foreground"> · arrivo</span> : null}</span>
+            <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
+              <span className="tabular-nums">{hhmm(f.orario)}</span>
+              {!f.arrivo && (
+                <button type="button" aria-label={`Bambini alla fermata ${f.nome}`} disabled={!(bambiniPerFermata[f.id]?.length)} onClick={() => setBambiniDi(f)}
+                  className="rounded-full bg-muted px-2 py-px text-[11px] font-semibold whitespace-nowrap text-foreground enabled:hover:bg-brand/10 enabled:hover:text-brand disabled:cursor-default disabled:text-muted-foreground">
+                  {bambiniPerFermata[f.id]?.length ? `${bambiniPerFermata[f.id].length} ${bambiniPerFermata[f.id].length === 1 ? "bambino" : "bambini"}` : "nessun bambino"}
+                </button>
+              )}
+            </span>
+          </span>
+          <span className="flex shrink-0 items-center">
             <Button variant="ghost" size="icon-sm" aria-label={`Sposta su ${f.nome}`} disabled={pending || f.capolinea || f.arrivo || f.ordine <= 2} onClick={() => esegui(() => spostaFermata(f.id, true))}><ArrowUp /></Button>
             <Button variant="ghost" size="icon-sm" aria-label={`Sposta giù ${f.nome}`} disabled={pending || f.capolinea || f.arrivo || f.ordine >= st.length - 1} onClick={() => esegui(() => spostaFermata(f.id, false))}><ArrowDown /></Button>
             <Button variant="ghost" size="icon-sm" aria-label={`Modifica ${f.nome}`} onClick={() => setFermata({ aperta: true, f })}><Pencil /></Button>
@@ -69,9 +74,8 @@ export function LineaCard({ scuolaId, linea: l, fermate: st, bambiniPerFermata, 
         </div>
       ))}
 
-      <div className="flex items-center gap-2 border-t border-border px-3 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-3 py-2">
         <Button variant="outline" size="sm" className="border-dashed" onClick={() => setFermata({ aperta: true })}><Plus /> Aggiungi fermata</Button>
-        <span className="flex-1" />
         {l.attiva
           ? <Button variant="outline" size="sm" onClick={() => { setMotivo(""); setSospensione(true); }}><Pause /> Sospendi</Button>
           : <Button size="sm" onClick={() => { setMotivo(""); setSospensione(true); }}><Play /> Riattiva</Button>}
@@ -204,15 +208,16 @@ function BambiniFermataDialog({ linea, fermata, bambini, destinazioni, open, onO
                   : <Button variant="outline" size="sm" onClick={() => { setInSpostamento(b.iscrizioneId); setDest({ linea: linea.id, fermata: "" }); }}>Sposta</Button>}
               </div>
               {inSpostamento === b.iscrizioneId && (
-                <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
+                /* Una riga per campo: sul telefono due tendine affiancate non mostrano nemmeno il nome della linea. */
+                <div className="flex flex-col gap-2">
                   <NativeSelect aria-label="Linea di destinazione" size="sm" className="w-full" value={dest.linea} onChange={(e) => setDest({ linea: e.target.value, fermata: "" })}>
                     {destinazioni.map((d) => <NativeSelectOption key={d.id} value={d.id}>{d.nome}</NativeSelectOption>)}
                   </NativeSelect>
                   <NativeSelect aria-label="Fermata di destinazione" size="sm" className="w-full" value={dest.fermata} onChange={(e) => setDest({ ...dest, fermata: e.target.value })}>
-                    <NativeSelectOption value="">Fermata…</NativeSelectOption>
+                    <NativeSelectOption value="">Fermata di destinazione…</NativeSelectOption>
                     {fermateDest.map((f) => <NativeSelectOption key={f.id} value={f.id}>{f.label}</NativeSelectOption>)}
                   </NativeSelect>
-                  <Button size="sm" disabled={pending || !dest.fermata} onClick={() => sposta(b.iscrizioneId)}>Conferma</Button>
+                  <Button size="sm" className="self-end" disabled={pending || !dest.fermata} onClick={() => sposta(b.iscrizioneId)}>Conferma lo spostamento</Button>
                 </div>
               )}
             </div>
