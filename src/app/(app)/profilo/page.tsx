@@ -161,7 +161,7 @@ export default async function ProfiloPage() {
         <H2>Privacy</H2>
         <Card size="sm" className="px-3">
           <div className="flex items-center justify-between gap-2.5"><Link href="/informativa" className="underline underline-offset-2">Informativa privacy</Link><Badge variant="secondary">{informativa ? `v. ${informativa.versione} · ${new Date(informativa.valida_dal).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" })}` : "—"}</Badge></div>
-          <div className="flex items-center justify-between gap-2.5"><span>Dati conservati</span><span className="text-[13px] text-muted-foreground">Unione Europea · fino a fine anno + 30 giorni</span></div>
+          <div className="flex items-center justify-between gap-2.5"><span>Dati conservati</span><span className="text-[13px] text-muted-foreground">Unione Europea · contatti fino al 30/7, storico 12 mesi</span></div>
         </Card>
       </div>
 

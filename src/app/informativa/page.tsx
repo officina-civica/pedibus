@@ -167,19 +167,30 @@ export default function InformativaPage() {
         </Sezione>
 
         <Sezione titolo="Per quanto tempo li teniamo">
+          <p>
+            L&apos;anno scolastico per noi finisce il 30 giugno. La cancellazione avviene in automatico, ogni notte, in due
+            tempi: quello che serve solo a far funzionare il servizio se ne va presto; quello che serve a ricostruire
+            cosa è successo in caso di incidente o contestazione resta 12 mesi.
+          </p>
           <Elenco>
             <li>
-              <b>Iscrizioni, dati dei bambini e contatti di emergenza</b>: per l&apos;anno scolastico in corso; li
-              cancelliamo entro 30 giorni dalla fine dell&apos;anno, a meno che tu non rinnovi l&apos;iscrizione.
+              <b>Contatti di emergenza e backup del genitore</b>: fino al 30 luglio, cioè 30 giorni dopo la fine
+              dell&apos;anno, a meno che tu non rinnovi l&apos;iscrizione. Lo stesso vale per le richieste di iscrizione mai
+              approvate.
             </li>
             <li>
-              <b>Presenze, appelli, turni e registro delle consultazioni</b>: 12 mesi, per poter ricostruire chi era presente
-              in caso di incidente o contestazione.
+              <b>Presenze, appelli, turni e registro delle consultazioni</b>: 12 mesi dal giorno a cui si riferiscono.
+            </li>
+            <li>
+              <b>Nome, cognome e classe del bambino, linea e fermata</b>: 12 mesi dopo la fine dell&apos;ultimo anno
+              scolastico frequentato, così presenze e appelli restano collegati a un nome per tutto il tempo in cui li
+              conserviamo.
             </li>
             <li><b>Avvisi</b>: 6 mesi.</li>
             <li>
-              <b>Il tuo profilo</b>: finché usi il servizio; lo cancelliamo su tua richiesta o dopo 12 mesi senza iscrizioni
-              né turni.
+              <b>Il tuo profilo</b> (nome, telefono, ruoli, notifiche, passkey): finché ci sono bambini iscritti, turni o
+              incarichi che ti riguardano; poi lo cancelliamo, al più tardi 12 mesi dopo l&apos;ultima attività. Puoi
+              chiederne la cancellazione prima in qualsiasi momento.
             </li>
           </Elenco>
         </Sezione>

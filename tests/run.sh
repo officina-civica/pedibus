@@ -29,4 +29,7 @@ run -f supabase/seed.sql
 echo "▸ replay del martedì + verifiche RLS"
 run -o /dev/null -f tests/replay.sql
 
+echo "▸ cancellazione automatica"
+run -o /dev/null -f tests/pulizia.sql
+
 echo "✔ tutto verde"
