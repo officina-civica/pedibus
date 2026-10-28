@@ -12,16 +12,16 @@ insert into scuole (id, comune_id, nome) values ('e0000000-0000-4000-8000-000000
 on conflict (id) do nothing;
 
 -- Informativa privacy in vigore (url: il link al documento del comitato, se c'è) ---------------
-insert into informative (id, versione, url, valida_dal) values ('e0000000-0000-4000-8000-000000000003', '1.0', null, current_date)
+insert into informative (id, versione, url, valida_dal) values ('e0000000-0000-4000-8000-000000000003', '1.0', 'https://pedibus.officinacivica.com/informativa', current_date)
 on conflict (id) do nothing;
 
 -- Linee e fermate ---------------------------------------------------------------------------------
--- DA SOSTITUIRE con le linee vere del pedibus di Vedano. Per ogni linea: nome, colore, minimo volontari,
+-- Linea Blu = la linea vera (28/10/2026). Linea Verde = di prova, creata sospesa (attiva = false). Per ogni linea: nome, colore, minimo volontari,
 -- soglia bambini sotto la quale si annulla, ora di partenza. Per ogni fermata: ordine, nome, orario;
 -- la prima è il capolinea, l'ultima è l'arrivo (la scuola) e non si può scegliere come salita.
-insert into linee (id, scuola_id, nome, colore, min_volontari, soglia_bambini, ora_partenza) values
-  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000001', 'Linea Verde', '#15803d', 2, 4, '07:30'),
-  ('c0000000-0000-4000-8000-000000000002', 'e0000000-0000-4000-8000-000000000001', 'Linea Blu',   '#1d4ed8', 2, 4, '07:35')
+insert into linee (id, scuola_id, nome, colore, min_volontari, soglia_bambini, ora_partenza, ora_arrivo, attiva) values
+  ('c0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000001', 'Linea Verde', '#15803d', 2, 4, '07:30', '08:00', false),
+  ('c0000000-0000-4000-8000-000000000002', 'e0000000-0000-4000-8000-000000000001', 'Linea Blu',   '#1d4ed8', 2, 4, '07:55', '08:15', true)
 on conflict (id) do nothing;
 
 insert into fermate (id, linea_id, ordine, nome, orario, capolinea, arrivo) values
@@ -31,11 +31,11 @@ insert into fermate (id, linea_id, ordine, nome, orario, capolinea, arrivo) valu
   ('d0000000-0000-4000-8000-000000000104', 'c0000000-0000-4000-8000-000000000001', 4, 'Via Verdi, parco',   '07:48', false, false),
   ('d0000000-0000-4000-8000-000000000105', 'c0000000-0000-4000-8000-000000000001', 5, 'Via Dante, chiesa',  '07:53', false, false),
   ('d0000000-0000-4000-8000-000000000106', 'c0000000-0000-4000-8000-000000000001', 6, 'Scuola primaria',    '08:00', false, true),
-  ('d0000000-0000-4000-8000-000000000201', 'c0000000-0000-4000-8000-000000000002', 1, 'Via Battisti',       '07:35', true,  false),
-  ('d0000000-0000-4000-8000-000000000202', 'c0000000-0000-4000-8000-000000000002', 2, 'Via Verdi, 40',      '07:41', false, false),
-  ('d0000000-0000-4000-8000-000000000203', 'c0000000-0000-4000-8000-000000000002', 3, 'Via Garibaldi, bar', '07:47', false, false),
-  ('d0000000-0000-4000-8000-000000000204', 'c0000000-0000-4000-8000-000000000002', 4, 'Via Cavour',         '07:53', false, false),
-  ('d0000000-0000-4000-8000-000000000205', 'c0000000-0000-4000-8000-000000000002', 5, 'Scuola primaria',    '08:00', false, true)
+  ('d0000000-0000-4000-8000-000000000201', 'c0000000-0000-4000-8000-000000000002', 1, 'Acqua e Sapone',                   '07:55', true,  false),
+  ('d0000000-0000-4000-8000-000000000202', 'c0000000-0000-4000-8000-000000000002', 2, 'Parchetto via Matteotti',          '08:00', false, false),
+  ('d0000000-0000-4000-8000-000000000203', 'c0000000-0000-4000-8000-000000000002', 3, 'Area verde via Grandi/via Gramsci', '08:05', false, false),
+  ('d0000000-0000-4000-8000-000000000204', 'c0000000-0000-4000-8000-000000000002', 4, 'Rotonda Iperal',                   '08:10', false, false),
+  ('d0000000-0000-4000-8000-000000000205', 'c0000000-0000-4000-8000-000000000002', 5, 'Via Italia (scuola)',              '08:15', false, true)
 on conflict (id) do nothing;
 
 -- Primo amministratore ---------------------------------------------------------------------------

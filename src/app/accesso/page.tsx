@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { AccessoForm } from "./accesso-form";
 
 export const metadata: Metadata = { title: "Accesso" };
@@ -12,6 +13,7 @@ export default function AccessoPage() {
         <p className="text-sm text-muted-foreground">Officina Civica</p>
       </div>
       <AccessoForm />
+      <Link href="/informativa" className="mt-2 text-[13px] text-muted-foreground underline underline-offset-2">Informativa privacy</Link>
     </main>
   );
 }
